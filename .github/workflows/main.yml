@@ -11,151 +11,74 @@ jobs:
       contents: write
 
     steps:
-      # - name: Cleanup storage
-      #   run: |
-      #     sudo rm -rf /usr/lib/jvm
-      #     sudo rm -rf /usr/share/dotnet
-      #     sudo rm -rf /usr/share/swift
-      #     sudo rm -rf /usr/local/.ghcup
-      #     sudo rm -rf /usr/local/julia*
-      #     sudo rm -rf /usr/local/lib/android
-      #     sudo rm -rf /usr/local/share/chromium
-      #     sudo rm -rf /opt/microsoft /opt/google
-      #     sudo rm -rf /opt/az
-      #     sudo rm -rf /opt/hostedtoolcache
-      #     sudo rm -rf /opt/ghc
-      #     sudo rm -rf "/usr/local/share/boost"
-          
-      #     docker system prune -af || true
-      #     docker builder prune -af || true
-      #     df -h
-
       - name: Checkout Repo
         uses: actions/checkout@v4
       
-      - name: Install packages
+      - name: Setup Environment & Catbox Script
         run: |
           sudo apt update
-          sudo apt install -y zstd p7zip-full bc
+          sudo apt install -y zstd p7zip-full bc curl
+          # Download and prepare the catbox interface script
+          wget -q https://gist.githubusercontent.com/MineBartekSA/1d42d6973ddafb82793fd49b4fb06591/raw/66073b9dc40a7c9e65ba470615071cf8f9f37809/catbox
+          chmod +x catbox
 
       - name: Wait for Final Sync from Peer
         run: |
-          if [ ! -f "catbox_links.txt" ]; then
-            exit 0
-          fi
-
-          echo "Starting wait loop for Final Sync..."
-          # Get the commit hash that triggered THIS run
+          if [ ! -f "catbox_links.txt" ]; then exit 0; fi
           TRIGGER_HASH=$(git rev-parse HEAD)
-          MAX_TRIES=15
-          
-          for i in {1..$MAX_TRIES}; do
+          for i in {1..15}; do
             git fetch origin main
-            LATEST_HASH=$(git rev-parse origin/main)
-            
-            if [ "$TRIGGER_HASH" != "$LATEST_HASH" ]; then
-              echo "Newer commit detected ($LATEST_HASH). Proceeding with restore."
+            if [ "$TRIGGER_HASH" != "$(git rev-parse origin/main)" ]; then
               git pull origin main
               exit 0
             fi
-            
-            echo "Waiting for Runner #1 to push final backup... (Attempt $i/$MAX_TRIES)"
+            echo "Waiting for Runner #1... (Attempt $i/15)"
             sleep 2
           done
-          
-          echo "No new commit found within 5 minutes. Proceeding with existing data."
 
       - name: Restore & Decode Data
         run: |
-          # 1. Ensure we have the latest metadata from the repo
           git pull origin main
           mkdir -p mc_data
           
-          # 2. Check for Permanent Archive Priority
+          # Priority: Permanent Archive
           if [ -f "archived.txt" ] && grep -q "true" archived.txt; then
-            echo "Archived state detected. Downloading from Catbox..."
-            
-            # Clean encoded string of any spaces/newlines before decoding
             URL=$(cat catbox_archive.txt | tr -d '[:space:]' | base64 -d)
-            
-            echo "Downloading archive from: $URL"
-            curl -L -o archive.7z "$URL"
-            
-            echo "Extracting archive..."
+            echo "Restoring from Archive: $URL"
+            curl -L -f -o archive.7z "$URL"
             sudo 7z x archive.7z -o./
-            
-            # Reset archive status so subsequent runs use the standard Litterbox flow
             echo "false" > archived.txt
             git config --global user.name "MC Backup Bot"
             git config --global user.email "actions@github.com"
             git add archived.txt
-            git commit -m "Restored from archive, resetting flag [skip ci]" || echo "No changes"
+            git commit -m "Restored from archive [skip ci]" || echo "No changes"
             git push origin main
-            
-            rm -f archive.7z
-
-          # 3. Fallback to Temporary Litterbox Chunks
+          
+          # Fallback: Temporary Chunks
           elif [ -f "catbox_links.txt" ]; then
-            echo "No archive found. Downloading temporary Litterbox chunks..."
-            
-            # Pre-clean the file: Remove lines that are purely whitespace or empty
             sed -i '/^[[:space:]]*$/d' catbox_links.txt
-            
             i=0
             while read -r line || [ -n "$line" ]; do
-              # Clean ONLY the current line of hidden characters (\r, spaces, etc.)
               clean_line=$(echo "$line" | tr -d '[:space:]')
+              decoded=$(echo "$clean_line" | base64 -d)
               
-              if [ -n "$clean_line" ]; then
-                url=$(echo "$clean_line" | base64 -d)
-                echo "Downloading part $i from $url"
-                
-                # Use explicit naming (part_0, part_1) to avoid 'sensible filename' errors
-                curl -L -o "part_$i" "$url"
-                ((i++))
+              # Validate decoded string isn't an HTML error
+              if [[ "$decoded" == *"<html"* ]]; then
+                echo "Fatal: Link $i is corrupted HTML error page."
+                exit 1
               fi
+
+              echo "Downloading part $i..."
+              curl -L -f -o "part_$i" "$decoded"
+              ((i++))
             done < catbox_links.txt
             
-            # 4. Reassemble and Extract
             if ls part_* 1> /dev/null 2>&1; then
-              echo "Reassembling $i parts..."
-              # 'ls -v' (Version Sort) is CRITICAL so part_10 doesn't come before part_2
               cat $(ls -v part_*) > backup.tar.zst
-              
-              echo "Decompressing world data..."
               sudo tar --use-compress-program=zstd -xf backup.tar.zst -C ./
-              
-              # Cleanup temporary chunks
               rm -f part_* backup.tar.zst
-            else
-              echo "Error: catbox_links.txt exists but no parts were successfully downloaded."
-              exit 1
             fi
-          else
-            echo "No backup data found (neither archive nor temporary links). Starting fresh server."
           fi
-
-      - name: Cache Minecraft Assets
-        uses: actions/cache@v4
-        with:
-          path: |
-            mc_data/mods
-            mc_data/libraries
-            mc_data/versions
-          key: mc-assets-${{ hashFiles('docker-compose.yml') }}
-          restore-keys: |
-            mc-assets-
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Cache Docker layers
-        uses: actions/cache@v4
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
 
       - name: Start Services
         env:
@@ -166,86 +89,45 @@ jobs:
           echo "PLAYIT_SECRET=$PLAYIT_SECRET" > .env
           echo "SERVER_OP=$SERVER_OP" >> .env
           echo "RCON_PASSWD=$RCON_PASSWD" >> .env
-
           docker compose up -d
           docker compose logs mc-java --follow & 
-          
           sleep 100
-
           docker exec mc-java rcon-cli "op $SERVER_OP"
-
-      - name: Verify Port Binding
-        run: |
-          echo "Checking if the ports are open on the runner..."
-          sudo netstat -tulpn | grep 25565 || echo "PORT 25565 IS NOT ACTIVE"
-          sudo netstat -tulpn | grep 25575 || echo "PORT 25575 IS NOT ACTIVE"
 
       - name: Operational Loop
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          docker compose logs mc-java --follow & 
-
-          docker pause mc-java
-          sudo tar --use-compress-program="zstd -T0" -cf - ./mc_data/* | split -b 990M - backup.tar.zst.
-          docker unpause mc-java
-
-          sudo chown runner:docker *zst*
-          
-          > new_links.txt
-          for file in *zst*; do
-            # Upload and Base64 encode the resulting URL
-            #LINK=$(curl -F "reqtype=fileupload" -F "fileToUpload=@$file" https://catbox.moe/user/api.php)
-            LINK=$(curl -F "reqtype=fileupload" -F "time=72h" -F "fileToUpload=@$file" https://litterbox.catbox.moe/resources/internals/api.php)
-            echo "$LINK" | base64 >> new_links.txt
-          done
-          
-          mv new_links.txt catbox_links.txt
-          git config --global user.name "MC Backup Bot"
-          git config --global user.email "actions@github.com"
-          git add catbox_links.txt
-          git commit -am "Sync world [skip ci]" || echo "No changes"
-          git pull --rebase origin main
-          git push origin main
-          
-          rm *zst*
-          echo "Backup complete. Server unpaused."
-
-          # Run 3 cycles of 20 minutes = 60 minutes total
-          for i in {1..12}; do
+          # 3 cycles of 20 minutes
+          for i in {1..3}; do
             sleep 1200
-            
-            echo "Pausing for backup..."
+            echo "Creating mid-run backup..."
             docker pause mc-java
-            
-            # Compress and split
-            #sudo 7z a -ssw -mx1 -v190m backup.7z ./mc_data/*
-            sudo tar --use-compress-program="zstd -T0" -cf - ./mc_data/* | split -b 990M - backup.tar.zst.
-            
+            sudo tar --use-compress-program="zstd -T0" -cf - ./mc_data/* | split -b 190M - backup.tar.zst.
             docker unpause mc-java
-            sudo chown runner:docker *zst*
-            
+
             > new_links.txt
-            for file in *zst*; do
-              # Upload and Base64 encode the resulting URL
-              #LINK=$(curl -F "reqtype=fileupload" -F "fileToUpload=@$file" https://catbox.moe/user/api.php)
-              LINK=$(curl -F "reqtype=fileupload" -F "time=72h" -F "fileToUpload=@$file" https://litterbox.catbox.moe/resources/internals/api.php)
-              echo "$LINK" | base64 >> new_links.txt
+            for file in backup.tar.zst.*; do
+              # Use the script for uploading (expires in 72h)
+              LINK=$(./catbox temp "$file" 72h --silent)
+              if [[ "$LINK" == http* ]]; then
+                echo "$LINK" | base64 >> new_links.txt
+              else
+                echo "Upload failed for $file: $LINK"
+                exit 1
+              fi
             done
             
             mv new_links.txt catbox_links.txt
             git config --global user.name "MC Backup Bot"
             git config --global user.email "actions@github.com"
             git add catbox_links.txt
-            git commit -am "Sync world [skip ci]" || echo "No changes"
+            git commit -am "Sync world cycle $i [skip ci]" || echo "No changes"
             git pull --rebase origin main
             git push origin main
-            
-            rm *zst*
-            echo "Backup complete. Server unpaused."
+            rm backup.tar.zst.*
             
             if [ $i -eq 3 ]; then
-              echo "Triggering next runner for handoff..."
               curl -X POST -H "Authorization: token $GH_TOKEN" \
                 -H "Accept: application/vnd.github.v3+json" \
                 https://api.github.com/repos/${{ github.repository }}/dispatches \
@@ -255,62 +137,45 @@ jobs:
 
       - name: Graceful Shutdown
         run: |
-          # Attempts to wait for players to go offline or an hour
           MAX_RETRIES=720
-          MAX_WAIT=$(echo "$MAX_RETRIES * 12" | bc)
           COUNT=0
           PLAYER_COUNT=1
-
-          echo "Starting graceful shutdown check..."
-
           while [ "$PLAYER_COUNT" -gt 0 ] && [ "$COUNT" -lt "$MAX_RETRIES" ]; do
             PLAYER_COUNT=$(timeout 10s docker exec mc-java rcon-cli list | grep -oP '(?<=there are )\d+' || echo 0)
-            
             if [ "$PLAYER_COUNT" -gt 0 ]; then
-              # Only broadcast every 60 seconds (12 loops) to avoid spamming chat
               if [ $((COUNT % 12)) -eq 0 ]; then
-                WAITED=$(echo "$COUNT / 12" | bc)
-                docker exec mc-java rcon-cli "say §6[Server] Migration pending. §eWaiting for players to log off... Waited $WAITED/$MAX_WAIT minutes..."
-                echo "Players still online ($PLAYER_COUNT). Waiting 5s... (Attempt $COUNT/$MAX_RETRIES)"
+                docker exec mc-java rcon-cli "say §6[Server] Migration pending. Waiting for log-off..."
               fi
               sleep 5
               ((COUNT++))
             fi
           done
 
-          if [ "$COUNT" -ge "$MAX_RETRIES" ]; then
-            echo "Timeout reached. Proceeding with forced shutdown."
-            docker exec mc-java rcon-cli "say §c[Server] Shutdown timeout reached. Saving world..."
-          else
-            echo "Server is empty. Proceeding with backup."
-          fi
-          
           docker compose down
-
-          sudo tar --use-compress-program="zstd -T0" -cf - ./mc_data/* | split -b 990M - backup.tar.zst.
-
-          sudo chown runner:docker *zst*
+          sudo tar --use-compress-program="zstd -T0" -cf - ./mc_data/* | split -b 190M - backup.tar.zst.
           
           > new_links.txt
-          for file in *zst*; do
-            # Upload and Base64 encode the resulting URL
-            #LINK=$(curl -F "reqtype=fileupload" -F "fileToUpload=@$file" https://catbox.moe/user/api.php)
-            LINK=$(curl -F "reqtype=fileupload" -F "time=72h" -F "fileToUpload=@$file" https://litterbox.catbox.moe/resources/internals/api.php)
-            echo "$LINK" | base64 >> new_links.txt
+          for file in backup.tar.zst.*; do
+            LINK=$(./catbox temp "$file" 72h --silent)
+            if [[ "$LINK" == http* ]]; then
+              echo "$LINK" | base64 >> new_links.txt
+            else
+              echo "Shutdown upload failed: $LINK"
+              exit 1
+            fi
           done
           
           mv new_links.txt catbox_links.txt
           git config --global user.name "MC Backup Bot"
           git config --global user.email "actions@github.com"
           git add catbox_links.txt
-          git commit -am "Sync world [skip ci]" || echo "No changes"
+          git commit -am "Final sync [skip ci]" || echo "No changes"
           git pull --rebase origin main
           git push origin main
-      
+
       - name: Final Log Capture
         if: always()
-        run: |
-          docker compose logs mc-java > final_logs.txt
+        run: docker compose logs mc-java > final_logs.txt
           
       - name: Upload Logs as Artifact
         if: always()
