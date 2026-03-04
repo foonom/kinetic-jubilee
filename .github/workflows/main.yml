@@ -87,10 +87,10 @@ jobs:
           # 1. Start a background process to tail logs for in-game OP commands
           docker compose logs mc-java --follow | while read -r line; do
             # Listen for an OP running "/say !backup"
-            if echo "$line" | grep -q "\[Server\] !backup"; then
+            if [ echo "$line" | grep -q "\[Server\] !backup" ]; then
               touch /tmp/force_backup
             # Listen for an OP running "/say !restart" or standard "/stop"
-            elif echo "$line" | grep -qE "\[Server\] !restart|Stopping server"; then
+            elif [ echo "$line" | grep -qE "\[Server\] !restart|Stopping server"]; then
               touch /tmp/force_restart
             fi
           done &
@@ -110,12 +110,12 @@ jobs:
             # 3. Interruptible sleep (1000 seconds = 500 * 2s)
             # This allows the script to react immediately to the /tmp files
             for j in {1..500}; do
-              if[ -f /tmp/force_backup ]; then
+              if [ -f /tmp/force_backup ]; then
                 echo "Immediate backup triggered by admin!"
                 rm -f /tmp/force_backup
                 break # Breaks the inner sleep loop, proceeds to backup
               fi
-              if[ -f /tmp/force_restart ]; then
+              if [ -f /tmp/force_restart ]; then
                 echo "Stop/Restart requested or server crashed!"
                 rm -f /tmp/force_restart
                 break 2 # Breaks outer loop (1..10), skipping directly to handoff
