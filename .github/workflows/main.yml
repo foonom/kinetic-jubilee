@@ -1,4 +1,4 @@
-name: Java Server Perpetual Runner
+name: MC Java Runner
 on:
   workflow_dispatch:
   repository_dispatch:
@@ -9,6 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+
     steps:
       - name: Cleanup storage
         run: |
@@ -47,7 +48,7 @@ jobs:
         env:
           PLAYIT_SECRET: ${{ secrets.PLAYIT_SECRET }}
           SERVER_OP: ${{ secrets.SERVER_OP }}
-       run: docker compose up -d
+        run: docker compose up -d
 
       - name: Operational Loop (1 Hour)
         env:
