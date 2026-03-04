@@ -71,8 +71,11 @@ jobs:
           echo "RCON_PASSWD=$RCON_PASSWD" >> .env
           docker compose up -d
           docker compose logs mc-java --follow & 
+          echo "Waiting for the server to be fully ready..."
+
+          timeout 1000 docker compose logs mc-java --follow | grep -F -m 1 "[Rcon] hello world" || echo "Server ready (or timed out after 5 minutes)"
           
-          sleep 100
+          echo "Opping $SERVER_OP..."
           docker exec mc-java rcon-cli "op $SERVER_OP"
       - name: Verify Port Binding
         run: |
@@ -87,10 +90,10 @@ jobs:
           # 1. Start a background process to tail logs for in-game OP commands
           docker compose logs mc-java --follow | while read -r line; do
             # Listen for an OP running "/say !backup"
-            if [ echo "$line" | grep -q "\[Server\] !backup" ]; then
+            if echo "$line" | grep -q "\[Server\] !backup"; then
               touch /tmp/force_backup
             # Listen for an OP running "/say !restart" or standard "/stop"
-            elif [ echo "$line" | grep -qE "\[Server\] !restart|Stopping server"]; then
+            elif echo "$line" | grep -qE "\[Server\] !restart|Stopping server"; then
               touch /tmp/force_restart
             fi
           done &
