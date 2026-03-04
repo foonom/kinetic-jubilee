@@ -22,6 +22,8 @@ jobs:
           sudo rm -rf /opt/microsoft /opt/google
           sudo rm -rf /opt/az
           sudo rm -rf /opt/hostedtoolcache
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
           
           docker system prune -af || true
           docker builder prune -af || true
@@ -44,7 +46,7 @@ jobs:
       - name: Start Services
         env:
           PLAYIT_SECRET: ${{ secrets.PLAYIT_SECRET }}
-          SERVER_OP: ${{ secrets.PLAYIT_SECRET }}
+          SERVER_OP: ${{ secrets.SERVER_OP }}
        run: docker compose up -d
 
       - name: Operational Loop (1 Hour)
