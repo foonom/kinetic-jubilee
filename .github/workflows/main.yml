@@ -103,6 +103,8 @@ jobs:
             sudo tar --use-compress-program="zstd -T0 -5" -cf - ./mc_data/* | split -b 990M - --numeric-suffixes=0 --elide-empty-files backup.tar.zst.
             docker unpause mc-java
 
+            sudo chown runner:docker backup.tar.zst.*
+
             > new_links.txt
             for file in backup.tar.zst.*; do
               # Use the script for uploading (expires in 72h)
