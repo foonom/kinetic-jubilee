@@ -60,7 +60,7 @@ jobs:
           
           sleep 100
 
-          docker exec mc-java rcon-cli op $SERVER_OP
+          docker exec mc-java rcon-cli "op $SERVER_OP"
 
       - name: Verify Port Binding
         run: |

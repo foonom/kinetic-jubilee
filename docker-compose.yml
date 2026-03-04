@@ -27,7 +27,7 @@ services:
       RCON_PASSWORD: "${RCON_PASSWD}"
       RCON_PORT: 25575
       RCON_CMDS_STARTUP:  |-
-        op ${SERVER_OP} 4
+        op ${SERVER_OP}
         say hello world
         
       MODRINTH_PROJECTS: |-
