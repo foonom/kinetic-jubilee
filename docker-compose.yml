@@ -17,10 +17,8 @@ services:
       OPS: |-
         ${SERVER_OP}
       MODRINTH_PROJECTS: |-
+        fabric-api
         worldedit
-        viafabric
-        viaversion
-        viabackwards
         ferrite-core
         lithium
       MODRINTH_DOWNLOAD_DEPENDENCIES: "required"
