@@ -19,7 +19,7 @@ jobs:
           sudo apt update
           sudo apt install -y zstd p7zip-full bc curl
           # Download and prepare the catbox interface script
-          wget -q https://gist.githubusercontent.com/MineBartekSA/1d42d6973ddafb82793fd49b4fb06591/raw/66073b9dc40a7c9e65ba470615071cf8f9f37809/catbox
+          wget https://gist.github.com/MineBartekSA/1d42d6973ddafb82793fd49b4fb06591/raw/66073b9dc40a7c9e65ba470615071cf8f9f37809/catbox
           chmod +x catbox
 
       - name: Wait for Final Sync from Peer
@@ -108,7 +108,7 @@ jobs:
             > new_links.txt
             for file in backup.tar.zst.*; do
               # Use the script for uploading (expires in 72h)
-              LINK=$(./catbox temp "$file" 72h --silent)
+              LINK=$(curl -F "reqtype=fileupload" -F "time=72h" -F "fileToUpload=@$file" https://litterbox.catbox.moe/resources/internals/api.php)
               if [[ "$LINK" == http* ]]; then
                 echo "$LINK" | base64 >> new_links.txt
               else
@@ -152,7 +152,7 @@ jobs:
           
           > new_links.txt
           for file in backup.tar.zst.*; do
-            LINK=$(./catbox temp "$file" 72h --silent)
+            LINK=$(curl -F "reqtype=fileupload" -F "time=72h" -F "fileToUpload=@$file" https://litterbox.catbox.moe/resources/internals/api.php)
             if [[ "$LINK" == http* ]]; then
               echo "$LINK" | base64 >> new_links.txt
             else
