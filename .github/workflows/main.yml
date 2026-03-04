@@ -124,8 +124,8 @@ jobs:
         run: |
           docker compose logs --follow & 
           # Run 3 cycles of 20 minutes = 60 minutes total
-          for i in {1..3}; do
-            sleep 180
+          for i in {1..12}; do
+            sleep 1200
             
             echo "Pausing for backup..."
             docker pause mc-java
@@ -175,6 +175,35 @@ jobs:
             docker exec mc-java rcon-cli "say §6[Server] Migration in progress..."
             docker exec mc-java rcon-cli "say §eThe server will restart in 30 seconds to stay online."
             sleep 30
+          fi
+
+          MAX_RETRIES=720
+          MAX_WAIT=$(echo "$MAX_RETRIES * 12" | bc)
+          COUNT=0
+          PLAYER_COUNT=1
+
+          echo "Starting graceful shutdown check..."
+
+          while [ "$PLAYER_COUNT" -gt 0 ] && [ "$COUNT" -lt "$MAX_RETRIES" ]; do
+            PLAYER_COUNT=$(timeout 10s docker exec mc-java rcon-cli list | grep -oP '(?<=there are )\d+' || echo 0)
+            
+            if [ "$PLAYER_COUNT" -gt 0 ]; then
+              # Only broadcast every 60 seconds (12 loops) to avoid spamming chat
+              if [ $((COUNT % 12)) -eq 0 ]; then
+                WAITED=$(echo "$COUNT / 12" | bc)
+                docker exec mc-java rcon-cli "say §6[Server] Migration pending. §eWaiting for players to log off... Waited $WAITED/$MAX_WAIT minutes..."
+                echo "Players still online ($PLAYER_COUNT). Waiting 5s... (Attempt $COUNT/$MAX_RETRIES)"
+              fi
+              sleep 5
+              ((COUNT++))
+            fi
+          done
+
+          if [ "$COUNT" -ge "$MAX_RETRIES" ]; then
+            echo "Timeout reached. Proceeding with forced shutdown."
+            docker exec mc-java rcon-cli "say §c[Server] Shutdown timeout reached. Saving world..."
+          else
+            echo "Server is empty. Proceeding with backup."
           fi
           
           docker compose down
