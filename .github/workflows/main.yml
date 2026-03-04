@@ -147,6 +147,30 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           docker compose logs mc-java --follow & 
+          sudo tar --use-compress-program="zstd -T0" -cf - ./mc_data/* | split -b 990M - backup.tar.zst.
+
+          sudo chown runner:docker *zst*
+          
+          > new_links.txt
+          for file in *zst*; do
+            # Upload and Base64 encode the resulting URL
+            #LINK=$(curl -F "reqtype=fileupload" -F "fileToUpload=@$file" https://catbox.moe/user/api.php)
+            LINK=$(curl -F "reqtype=fileupload" -F "time=72h" -F "fileToUpload=@$file" https://litterbox.catbox.moe/resources/internals/api.php)
+            echo "$LINK" | base64 >> new_links.txt
+          done
+          
+          mv new_links.txt catbox_links.txt
+          git config --global user.name "MC Backup Bot"
+          git config --global user.email "actions@github.com"
+          git add catbox_links.txt
+          git commit -am "Sync world [skip ci]" || echo "No changes"
+          git pull --rebase origin main
+          git push origin main
+          
+          rm *zst*
+          docker unpause mc-java
+          echo "Backup complete. Server unpaused."
+
           # Run 3 cycles of 20 minutes = 60 minutes total
           for i in {1..12}; do
             sleep 1200
