@@ -158,10 +158,10 @@ jobs:
             #sudo 7z a -ssw -mx1 -v190m backup.7z ./mc_data/*
             sudo tar --use-compress-program="zstd -T0" -cf - ./mc_data/* | split -b 990M - backup.tar.zst.
 
-            sudo chown runner:docker backup.7z.*
+            sudo chown runner:docker *zst*
             
             > new_links.txt
-            for file in backup.7z.*; do
+            for file in *zst*; do
               # Upload and Base64 encode the resulting URL
               #LINK=$(curl -F "reqtype=fileupload" -F "fileToUpload=@$file" https://catbox.moe/user/api.php)
               LINK=$(curl -F "reqtype=fileupload" -F "time=72h" -F "fileToUpload=@$file" https://litterbox.catbox.moe/resources/internals/api.php)
@@ -176,11 +176,10 @@ jobs:
             git pull --rebase origin main
             git push origin main
             
-            rm backup.7z.*
+            rm *zst*
             docker unpause mc-java
             echo "Backup complete. Server unpaused."
             
-            # On the final loop, trigger the next runner before finishing
             if [ $i -eq 3 ]; then
               echo "Triggering next runner for handoff..."
               curl -X POST -H "Authorization: token $GH_TOKEN" \
@@ -192,15 +191,7 @@ jobs:
 
       - name: Graceful Shutdown
         run: |
-          # Check player count via RCON
-          PLAYER_COUNT=$(timeout 30s docker exec mc-java rcon-cli list | grep -oP '(?<=there are )\d+' || echo 0)
-
-          if [ "$PLAYER_COUNT" -gt "0" ]; then
-            docker exec mc-java rcon-cli "say §6[Server] Migration in progress..."
-            docker exec mc-java rcon-cli "say §eThe server will restart in 30 seconds to stay online."
-            sleep 30
-          fi
-
+          # Attempts to wait for players to go offline or an hour
           MAX_RETRIES=720
           MAX_WAIT=$(echo "$MAX_RETRIES * 12" | bc)
           COUNT=0
@@ -232,24 +223,25 @@ jobs:
           
           docker compose down
 
-          sudo 7z a -ssw -mx1 -v190m backup.7z ./mc_data/*
+          sudo tar --use-compress-program="zstd -T0" -cf - ./mc_data/* | split -b 990M - backup.tar.zst.
 
-            sudo chown runner:docker backup.7z.*
-            
-            > new_links.txt
-            for file in backup.7z.*; do
-              # Upload and Base64 encode the resulting URL
-              LINK=$(curl -F "reqtype=fileupload" -F "fileToUpload=@$file" https://catbox.moe/user/api.php)
-              echo "$LINK" | base64 >> new_links.txt
-            done
-            
-            mv new_links.txt catbox_links.txt
-            git config --global user.name "MC Backup Bot"
-            git config --global user.email "actions@github.com"
-            git add catbox_links.txt
-            git commit -am "Sync world [skip ci]" || echo "No changes"
-            git pull --rebase origin main
-            git push origin main
+          sudo chown runner:docker *zst*
+          
+          > new_links.txt
+          for file in *zst*; do
+            # Upload and Base64 encode the resulting URL
+            #LINK=$(curl -F "reqtype=fileupload" -F "fileToUpload=@$file" https://catbox.moe/user/api.php)
+            LINK=$(curl -F "reqtype=fileupload" -F "time=72h" -F "fileToUpload=@$file" https://litterbox.catbox.moe/resources/internals/api.php)
+            echo "$LINK" | base64 >> new_links.txt
+          done
+          
+          mv new_links.txt catbox_links.txt
+          git config --global user.name "MC Backup Bot"
+          git config --global user.email "actions@github.com"
+          git add catbox_links.txt
+          git commit -am "Sync world [skip ci]" || echo "No changes"
+          git pull --rebase origin main
+          git push origin main
       
       - name: Final Log Capture
         if: always()
