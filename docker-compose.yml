@@ -29,12 +29,18 @@ services:
       RCON_CMDS_STARTUP:  |-
         op ${SERVER_OP}
         say hello world
+        carpet scripts_optimization true
+        carpet lagFreeSpawning true
         
       MODRINTH_PROJECTS: |-
         fabric-api
         no-chat-reports
         lithium
         ferrite-core
+        krypton
+        debugify
+        distanthorizons
+        c2me-fabric
         worldedit
         carpet
     volumes:
