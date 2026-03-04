@@ -36,7 +36,7 @@ jobs:
       - name: Wait for Final Sync from Peer
         run: |
           if [ ! -f "catbox_links.txt" ]; then exit 0; fi
-          
+
           TRIGGER_HASH=$(git rev-parse HEAD)
           for i in {1..800}; do
             git fetch origin main
@@ -79,14 +79,14 @@ jobs:
           echo "Checking if the ports are open on the runner..."
           sudo netstat -tulpn | grep 25565 || echo "PORT 25565 IS NOT ACTIVE"
           sudo netstat -tulpn | grep 25575 || echo "PORT 25575 IS NOT ACTIVE"
-      - name: Operational Loop (1 Hour)
+      - name: Main Loop
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           docker compose logs mc-java --follow & 
-          # Run 3 cycles of 20 minutes = 60 minutes total
-          for i in {1..36}; do
-            sleep 300
+          
+          for i in {1..10}; do
+            sleep 1000
             
             echo "Pausing for backup..."
             docker pause mc-java
