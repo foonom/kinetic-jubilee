@@ -1,0 +1,50 @@
+name: Archive World to Catbox
+on:
+  workflow_dispatch:
+
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Download and Rebuild
+        run: |
+          if [ -f "catbox_links.txt" ]; then
+            mkdir -p temp_archive
+            while read -r line; do
+              url=$(echo "$line" | base64 -d)
+              # Litterbox files usually have random names, we need to ensure we get them all
+              curl -L -O -J "$url" 
+            done < catbox_links.txt
+            
+            # Reassemble based on your main workflow's split pattern (backup.tar.zst.*)
+            cat backup.tar.zst.* > full_backup.tar.zst
+            
+            # Extract so we can re-compress it as a single 7z for Catbox
+            sudo tar --use-compress-program=zstd -xf full_backup.tar.zst -C ./temp_archive
+          else
+            echo "No temporary backup found."
+            exit 1
+          fi
+
+      - name: Create Permanent 7z
+        run: |
+          # Compress into a single file (Catbox limit is 200MB, 
+          # if your world is larger, you may need to split again)
+          sudo 7z a -mx9 world_archive.7z ./temp_archive/*
+
+      - name: Upload to Catbox
+        run: |
+          LINK=$(curl -F "reqtype=fileupload" -F "fileToUpload=@world_archive.7z" https://catbox.moe/user/api.php)
+          echo "$LINK" | base64 > catbox_archive.txt
+          echo "true" > archived.txt
+
+      - name: Commit Archive Info
+        run: |
+          git config --global user.name "MC Archive Bot"
+          git config --global user.email "actions@github.com"
+          git add catbox_archive.txt archived.txt
+          git commit -m "Permanent archive created [skip ci]"
+          git push origin main

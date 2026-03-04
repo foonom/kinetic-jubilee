@@ -32,6 +32,11 @@ jobs:
 
       - name: Checkout Repo
         uses: actions/checkout@v4
+      
+      - name: Install packages
+        run: |
+          sudo apt update
+          sudo apt install -y zstd p7zip-full bc
 
       - name: Wait for Final Sync from Peer
         run: |
@@ -39,8 +44,8 @@ jobs:
           # Get the commit hash that triggered THIS run
           TRIGGER_HASH=$(git rev-parse HEAD)
           
-          # Poll for 30s max
-          for i in {1..15}; do
+          # Poll for 60s max
+          for i in {1..60}; do
             git fetch origin main
             LATEST_HASH=$(git rev-parse origin/main)
             
@@ -59,18 +64,33 @@ jobs:
       - name: Restore & Decode Data
         run: |
           git pull origin main
-          if [ -f "catbox_links.txt" ]; then
-            mkdir -p mc_data
+          mkdir -p mc_data
+          
+          if [ -f "archived.txt" ] && [ "$(cat archived.txt)" = "true" ]; then
+            echo "Archived state detected. Downloading from Catbox..."
+            URL=$(cat catbox_archive.txt | base64 -d)
+            curl -L -o archive.7z "$URL"
+            sudo 7z x archive.7z -o./
+            # Reset archive status so next backup goes to Litterbox normally
+            echo "false" > archived.txt
+            git config --global user.name "MC Backup Bot"
+            git config --global user.email "actions@github.com"
+            git add archived.txt
+            git commit -m "Restored from archive, resetting flag [skip ci]" || echo "No changes"
+            git push origin main
+          
+          elif [ -f "catbox_links.txt" ]; then
+            echo "No archive found. Downloading temporary Litterbox chunks..."
             while read -r line; do
               url=$(echo "$line" | base64 -d)
               curl -L -O -J "$url" 
             done < catbox_links.txt
             
-            if ls *zst* 1> /dev/null 2>&1; then
-              cat *zst* > backup.tar.zst
+            if ls backup.tar.zst.* 1> /dev/null 2>&1; then
+              cat backup.tar.zst.* > backup.tar.zst
               sudo tar --use-compress-program=zstd -xf backup.tar.zst -C ./
             fi
-            rm -f *zst*
+            rm -f backup.tar.zst*
           fi
 
       - name: Cache Minecraft Assets
@@ -106,7 +126,7 @@ jobs:
           echo "RCON_PASSWD=$RCON_PASSWD" >> .env
 
           docker compose up -d
-          docker compose logs --follow & 
+          docker compose logs mc-java --follow & 
           
           sleep 100
 
@@ -122,7 +142,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          docker compose logs --follow & 
+          docker compose logs mc-java --follow & 
           # Run 3 cycles of 20 minutes = 60 minutes total
           for i in {1..12}; do
             sleep 1200
@@ -230,7 +250,7 @@ jobs:
       - name: Final Log Capture
         if: always()
         run: |
-          docker compose logs > final_logs.txt
+          docker compose logs mc-java > final_logs.txt
           
       - name: Upload Logs as Artifact
         if: always()
