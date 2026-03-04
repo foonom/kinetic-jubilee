@@ -11,24 +11,25 @@ jobs:
       contents: write
 
     steps:
-      - name: Cleanup storage
-        run: |
-          sudo rm -rf /usr/lib/jvm
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /usr/share/swift
-          sudo rm -rf /usr/local/.ghcup
-          sudo rm -rf /usr/local/julia*
-          sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /usr/local/share/chromium
-          sudo rm -rf /opt/microsoft /opt/google
-          sudo rm -rf /opt/az
-          sudo rm -rf /opt/hostedtoolcache
-          sudo rm -rf /opt/ghc
-          sudo rm -rf "/usr/local/share/boost"
+      # - name: Cleanup storage
+      #   run: |
+      #     sudo rm -rf /usr/lib/jvm
+      #     sudo rm -rf /usr/share/dotnet
+      #     sudo rm -rf /usr/share/swift
+      #     sudo rm -rf /usr/local/.ghcup
+      #     sudo rm -rf /usr/local/julia*
+      #     sudo rm -rf /usr/local/lib/android
+      #     sudo rm -rf /usr/local/share/chromium
+      #     sudo rm -rf /opt/microsoft /opt/google
+      #     sudo rm -rf /opt/az
+      #     sudo rm -rf /opt/hostedtoolcache
+      #     sudo rm -rf /opt/ghc
+      #     sudo rm -rf "/usr/local/share/boost"
           
-          docker system prune -af || true
-          docker builder prune -af || true
-          df -h
+      #     docker system prune -af || true
+      #     docker builder prune -af || true
+      #     df -h
+
       - name: Checkout Repo
         uses: actions/checkout@v4
 
@@ -48,7 +49,16 @@ jobs:
         env:
           PLAYIT_SECRET: ${{ secrets.PLAYIT_SECRET }}
           SERVER_OP: ${{ secrets.SERVER_OP }}
-        run: docker compose up -d
+        run: |
+          docker compose up -d
+          docker compose logs --follow & 
+          
+          sleep 60
+
+      - name: Verify Port Binding
+        run: |
+          echo "Checking if port 25575 is open on the runner..."
+          sudo netstat -tulpn | grep 25575 || echo "PORT 25575 IS NOT ACTIVE"
 
       - name: Operational Loop (1 Hour)
         env:
@@ -96,4 +106,16 @@ jobs:
         run: |
           # Wait 2 minutes to let the new runner take over
           sleep 120
-          docker-compose down
+          docker compose down
+      
+      - name: Final Log Capture
+        if: always()
+        run: |
+          docker compose logs > final_logs.txt
+          
+      - name: Upload Logs as Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-debug-logs
+          path: final_logs.txt

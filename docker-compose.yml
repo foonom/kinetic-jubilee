@@ -3,11 +3,12 @@ services:
     image: itzg/minecraft-server:latest
     container_name: mc-java
     ports:
-      - "25565:25565"
+      - "25575:25575"
     environment:
       EULA: "TRUE"
       TYPE: "FABRIC"
-      MEMORY: "12288M"
+      MEMORY: "10000M"
+      SERVER_PORT: "25575" # Tells the Minecraft server to bind to 25575
       MOTD: "Server 3: Kinetic Jubilee"
       ONLINE_MODE: "false"
       ENABLE_COMMAND_BLOCK: "true"
@@ -29,7 +30,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 13G
+          memory: 12G
 
   playit:
     image: ghcr.io/playit-cloud/playit-agent:0.17
