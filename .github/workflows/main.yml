@@ -91,9 +91,7 @@ jobs:
           echo "RCON_PASSWD=$RCON_PASSWD" >> .env
           docker compose up -d
           docker compose logs mc-java --follow & 
-          # sleep 100
-          docker exec mc-java rcon-cli "op $SERVER_OP"
-
+          
       - name: Operational Loop
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
