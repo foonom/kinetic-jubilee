@@ -79,22 +79,66 @@ jobs:
           echo "Checking if the ports are open on the runner..."
           sudo netstat -tulpn | grep 25565 || echo "PORT 25565 IS NOT ACTIVE"
           sudo netstat -tulpn | grep 25575 || echo "PORT 25575 IS NOT ACTIVE"
+      
       - name: Main Loop
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          docker compose logs mc-java --follow & 
-          
+          # 1. Start a background process to tail logs for in-game OP commands
+          docker compose logs mc-java --follow | while read -r line; do
+            # Listen for an OP running "/say !backup"
+            if echo "$line" | grep -q "\[Server\] !backup"; then
+              touch /tmp/force_backup
+            # Listen for an OP running "/say !restart" or standard "/stop"
+            elif echo "$line" | grep -qE "\[Server\] !restart|Stopping server"; then
+              touch /tmp/force_restart
+            fi
+          done &
+
+          # 2. Start a background monitor to detect if the container crashes
+          (
+            while true; do
+              STATUS=$(docker inspect -f '{{.State.Status}}' mc-java 2>/dev/null || echo "missing")
+              if [ "$STATUS" == "exited" ]; then
+                 touch /tmp/force_restart
+              fi
+              sleep 5
+            done
+          ) &
+
           for i in {1..10}; do
-            sleep 1000
+            # 3. Interruptible sleep (1000 seconds = 500 * 2s)
+            # This allows the script to react immediately to the /tmp files
+            for j in {1..500}; do
+              if[ -f /tmp/force_backup ]; then
+                echo "Immediate backup triggered by admin!"
+                rm -f /tmp/force_backup
+                break # Breaks the inner sleep loop, proceeds to backup
+              fi
+              if[ -f /tmp/force_restart ]; then
+                echo "Stop/Restart requested or server crashed!"
+                rm -f /tmp/force_restart
+                break 2 # Breaks outer loop (1..10), skipping directly to handoff
+              fi
+              sleep 2
+            done
             
-            echo "Pausing for backup..."
-            docker pause mc-java
+            echo "Starting backup process..."
+            
+            # 4. Safe backup without interrupting players!
+            # Tell server to push memory to disk, then pause disk writes
+            docker exec mc-java rcon-cli "say §6[Server] Starting seamless backup..." || true
+            docker exec mc-java rcon-cli "save-all flush" || docker exec mc-java rcon-cli "save-all" || true
+            sleep 2
+            docker exec mc-java rcon-cli "save-off" || true
             
             # Compress and split
             sudo 7z a -ssw -mx1 -v190m backup.7z ./mc_data/*
             sudo chown runner:docker backup.7z.*
-            docker unpause mc-java
+            
+            # Re-enable auto-saving
+            docker exec mc-java rcon-cli "save-on" || true
+            docker exec mc-java rcon-cli "say §a[Server] Backup complete." || true
             
             > new_links.txt
             for file in backup.7z.*; do
@@ -111,9 +155,9 @@ jobs:
             git pull --rebase origin main
             git push origin main
             
-            rm backup.7z.*
-            echo "Backup complete. Server unpaused."
+            rm -f backup.7z.*
           done
+          
           echo "Triggering next runner for handoff..."
           curl -X POST -H "Authorization: token $GH_TOKEN" \
             -H "Accept: application/vnd.github.v3+json" \
