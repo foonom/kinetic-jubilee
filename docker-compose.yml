@@ -20,7 +20,6 @@ services:
       OP_PERMISSION_LEVEL: "4"
       SPAWN_PROTECTION: "0"
       FORCE_GAMEMODE: "false"
-      MODRINTH_DOWNLOAD_DEPENDENCIES: "required"
       ENFORCE_SECURE_PROFILE: "false"
       LOG_IPS: "false"
       ENABLE_RCON: "true"
@@ -32,6 +31,8 @@ services:
         carpet scripts_optimization true
         carpet lagFreeSpawning true
         
+      MODRINTH_DOWNLOAD_DEPENDENCIES: "required"
+      MODRINTH_ALLOWED_VERSION_TYPE: "alpha"
       MODRINTH_PROJECTS: |-
         fabric-api
         no-chat-reports
