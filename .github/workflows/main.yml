@@ -91,15 +91,14 @@ jobs:
           echo "RCON_PASSWD=$RCON_PASSWD" >> .env
           docker compose up -d
           docker compose logs mc-java --follow & 
-          sleep 100
+          # sleep 100
           docker exec mc-java rcon-cli "op $SERVER_OP"
 
       - name: Operational Loop
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # 3 cycles of 20 minutes
-          for i in {1..3}; do
+          for i in {1..10}; do
             sleep 1200
             echo "Creating mid-run backup..."
             docker pause mc-java
@@ -121,13 +120,13 @@ jobs:
             mv new_links.txt catbox_links.txt
             git config --global user.name "MC Backup Bot"
             git config --global user.email "actions@github.com"
+            git pull --rebase origin main
             git add catbox_links.txt
             git commit -am "Sync world cycle $i [skip ci]" || echo "No changes"
-            git pull --rebase origin main
             git push origin main
-            rm backup.tar.zst.*
+            rm *zst*
             
-            if [ $i -eq 3 ]; then
+            if [ $i -eq 10 ]; then
               curl -X POST -H "Authorization: token $GH_TOKEN" \
                 -H "Accept: application/vnd.github.v3+json" \
                 https://api.github.com/repos/${{ github.repository }}/dispatches \
@@ -168,9 +167,9 @@ jobs:
           mv new_links.txt catbox_links.txt
           git config --global user.name "MC Backup Bot"
           git config --global user.email "actions@github.com"
+          git pull --rebase origin main
           git add catbox_links.txt
           git commit -am "Final sync [skip ci]" || echo "No changes"
-          git pull --rebase origin main
           git push origin main
 
       - name: Final Log Capture
