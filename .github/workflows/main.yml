@@ -97,7 +97,8 @@ jobs:
             git config --global user.email "actions@github.com"
             git add catbox_links.txt
             git commit -am "Sync world [skip ci]" || echo "No changes"
-            git push
+            git pull --rebase origin main
+            git push origin main
             
             rm backup.7z.*
             docker unpause mc-java
