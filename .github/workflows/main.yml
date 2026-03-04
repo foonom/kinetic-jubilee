@@ -33,17 +33,67 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v4
 
+      - name: Wait for Final Sync from Peer
+        run: |
+          echo "Starting wait loop for Final Sync..."
+          # Get the commit hash that triggered THIS run
+          TRIGGER_HASH=$(git rev-parse HEAD)
+          
+          # Poll for 30s max
+          for i in {1..15}; do
+            git fetch origin main
+            LATEST_HASH=$(git rev-parse origin/main)
+            
+            if [ "$TRIGGER_HASH" != "$LATEST_HASH" ]; then
+              echo "Newer commit detected ($LATEST_HASH). Proceeding with restore."
+              git pull origin main
+              exit 0
+            fi
+            
+            echo "Waiting for Runner #1 to push final backup... (Attempt $i/15)"
+            sleep 2
+          done
+          
+          echo "No new commit found within 5 minutes. Proceeding with existing data."
+
       - name: Restore & Decode Data
         run: |
+          git pull origin main
           if [ -f "catbox_links.txt" ]; then
             mkdir -p mc_data
-            # Decode Base64 links and download
             while read -r line; do
               url=$(echo "$line" | base64 -d)
-              curl -L "$url" -o "part_$(date +%s%N).7z"
+              curl -L -O -J "$url" 
             done < catbox_links.txt
-            cat part_* > backup.7z && 7z x backup.7z -omc_data/ && rm part_* backup.7z
+            
+            if ls *zst* 1> /dev/null 2>&1; then
+              cat *zst* > backup.tar.zst
+              sudo tar --use-compress-program=zstd -xf backup.tar.zst -C ./
+            fi
+            rm -f *zst*
           fi
+
+      - name: Cache Minecraft Assets
+        uses: actions/cache@v4
+        with:
+          path: |
+            mc_data/mods
+            mc_data/libraries
+            mc_data/versions
+          key: mc-assets-${{ hashFiles('docker-compose.yml') }}
+          restore-keys: |
+            mc-assets-
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
 
       - name: Start Services
         env:
@@ -68,7 +118,7 @@ jobs:
           sudo netstat -tulpn | grep 25565 || echo "PORT 25565 IS NOT ACTIVE"
           sudo netstat -tulpn | grep 25575 || echo "PORT 25575 IS NOT ACTIVE"
 
-      - name: Operational Loop (1 Hour)
+      - name: Operational Loop
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -81,14 +131,16 @@ jobs:
             docker pause mc-java
             
             # Compress and split
-            sudo 7z a -ssw -mx1 -v190m backup.7z ./mc_data/*
+            #sudo 7z a -ssw -mx1 -v190m backup.7z ./mc_data/*
+            sudo tar --use-compress-program="zstd -T0" -cf - ./mc_data/* | split -b 990M - backup.tar.zst.
 
             sudo chown runner:docker backup.7z.*
             
             > new_links.txt
             for file in backup.7z.*; do
               # Upload and Base64 encode the resulting URL
-              LINK=$(curl -F "reqtype=fileupload" -F "fileToUpload=@$file" https://catbox.moe/user/api.php)
+              #LINK=$(curl -F "reqtype=fileupload" -F "fileToUpload=@$file" https://catbox.moe/user/api.php)
+              LINK=$(curl -F "reqtype=fileupload" -F "time=72h" -F "fileToUpload=@$file" https://litterbox.catbox.moe/resources/internals/api.php)
               echo "$LINK" | base64 >> new_links.txt
             done
             
@@ -116,9 +168,35 @@ jobs:
 
       - name: Graceful Shutdown
         run: |
-          # Wait to let the new runner take over
-          sleep 100
+          # Check player count via RCON
+          PLAYER_COUNT=$(timeout 30s docker exec mc-java rcon-cli list | grep -oP '(?<=there are )\d+' || echo 0)
+
+          if [ "$PLAYER_COUNT" -gt "0" ]; then
+            docker exec mc-java rcon-cli "say §6[Server] Migration in progress..."
+            docker exec mc-java rcon-cli "say §eThe server will restart in 30 seconds to stay online."
+            sleep 30
+          fi
+          
           docker compose down
+
+          sudo 7z a -ssw -mx1 -v190m backup.7z ./mc_data/*
+
+            sudo chown runner:docker backup.7z.*
+            
+            > new_links.txt
+            for file in backup.7z.*; do
+              # Upload and Base64 encode the resulting URL
+              LINK=$(curl -F "reqtype=fileupload" -F "fileToUpload=@$file" https://catbox.moe/user/api.php)
+              echo "$LINK" | base64 >> new_links.txt
+            done
+            
+            mv new_links.txt catbox_links.txt
+            git config --global user.name "MC Backup Bot"
+            git config --global user.email "actions@github.com"
+            git add catbox_links.txt
+            git commit -am "Sync world [skip ci]" || echo "No changes"
+            git pull --rebase origin main
+            git push origin main
       
       - name: Final Log Capture
         if: always()
