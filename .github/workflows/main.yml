@@ -81,7 +81,7 @@ jobs:
             docker pause mc-java
             
             # Compress and split
-            sudo 7z a -ssw -v190m backup.7z ./mc_data/*
+            sudo 7z a -ssw -mx1 -v190m backup.7z ./mc_data/*
 
             sudo chown runner:docker backup.7z.*
             
