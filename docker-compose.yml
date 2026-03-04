@@ -17,6 +17,9 @@ services:
       SEED: "-9079713339616171283"
       MAX_TICK_TIME: "-1"
       OPS: "${SERVER_OP}"
+      OP_PERMISSION_LEVEL: "4"
+      SPAWN_PROTECTION: "0"
+      FORCE_GAMEMODE: "false"
       MODRINTH_PROJECTS: |-
         fabric-api
         worldedit
