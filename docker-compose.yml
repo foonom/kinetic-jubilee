@@ -30,7 +30,6 @@ services:
       resources:
         limits:
           memory: 13G
-    restart: unless-stopped
 
   playit:
     image: ghcr.io/playit-cloud/playit-agent:0.17
@@ -38,4 +37,3 @@ services:
     network_mode: host
     environment:
       - SECRET_KEY=${PLAYIT_SECRET}
-    restart: unless-stopped
