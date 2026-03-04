@@ -2,13 +2,15 @@ services:
   mc-java:
     image: itzg/minecraft-server:latest
     container_name: mc-java
+    stdin_open: true
+    tty: true
     ports:
-      - "25575:25575"
+      - "25565:25565"
     environment:
       EULA: "TRUE"
       TYPE: "FABRIC"
       MEMORY: "10000M"
-      SERVER_PORT: "25575" # Tells the Minecraft server to bind to 25575
+      SERVER_PORT: "25565" # Tells the Minecraft server to bind to 25575
       MOTD: "Server 3: Kinetic Jubilee"
       ONLINE_MODE: "false"
       ENABLE_COMMAND_BLOCK: "true"
@@ -23,6 +25,15 @@ services:
       MODRINTH_DOWNLOAD_DEPENDENCIES: "required"
       ENFORCE_SECURE_PROFILE: "false"
       LOG_IPS: "false"
+      ENABLE_RCON: "true"
+      RCON_PASSWORD: "${RCON_PASSWD}"
+      RCON_PORT: 25575
+      RCON_CMDS_STARTUP:  |-
+        op ${SERVER_OP}
+        pregen start 200
+        say hello world
+      RCON_CMDS_FIRST_CONNECT: |-
+        pregen stop
     volumes:
       - "./mc_data:/data"
     deploy:

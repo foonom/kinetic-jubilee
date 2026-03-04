@@ -49,13 +49,18 @@ jobs:
         env:
           PLAYIT_SECRET: ${{ secrets.PLAYIT_SECRET }}
           SERVER_OP: ${{ secrets.SERVER_OP }}
+          RCON_PASSWD: ${{ secrets.RCON_PASSWD }}
         run: |
           echo "PLAYIT_SECRET=$PLAYIT_SECRET" > .env
           echo "SERVER_OP=$SERVER_OP" >> .env
+          echo "RCON_PASSWD=$RCON_PASSWD" >> .env
+
           docker compose up -d
           docker compose logs --follow & 
           
-          sleep 60
+          sleep 100
+          docker exec mc rcon-cli op $SERVER_OP
+          docker exec --user 1000 mc mc-send-to-console op $SERVER_OP
 
       - name: Verify Port Binding
         run: |
