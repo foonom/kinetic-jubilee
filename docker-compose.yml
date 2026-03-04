@@ -18,6 +18,7 @@ services:
         ${SERVER_OP}
       MODRINTH_PROJECTS: |-
         worldedit
+        viafabric
         viaversion
         viabackwards
         ferrite-core
