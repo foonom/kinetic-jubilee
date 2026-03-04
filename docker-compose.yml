@@ -32,8 +32,6 @@ services:
         op ${SERVER_OP}
         pregen start 200
         say hello world
-      RCON_CMDS_FIRST_CONNECT: |-
-        pregen stop
     volumes:
       - "./mc_data:/data"
     deploy:

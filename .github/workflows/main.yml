@@ -59,12 +59,13 @@ jobs:
           docker compose logs --follow & 
           
           sleep 100
+          
           docker exec mc rcon-cli op $SERVER_OP
-          docker exec --user 1000 mc mc-send-to-console op $SERVER_OP
 
       - name: Verify Port Binding
         run: |
-          echo "Checking if port 25575 is open on the runner..."
+          echo "Checking if the ports are open on the runner..."
+          sudo netstat -tulpn | grep 25565 || echo "PORT 25565 IS NOT ACTIVE"
           sudo netstat -tulpn | grep 25575 || echo "PORT 25575 IS NOT ACTIVE"
 
       - name: Operational Loop (1 Hour)
