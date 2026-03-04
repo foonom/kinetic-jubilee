@@ -100,7 +100,7 @@ jobs:
             sleep 100
             echo "Creating mid-run backup..."
             docker pause mc-java
-            sudo tar --use-compress-program="zstd -T0" -5 -cf - ./mc_data/* | split -b 990M - backup.tar.zst.
+            sudo tar --use-compress-program="zstd -T0 -5" -cf - ./mc_data/* | split -b 990M - --numeric-suffixes=0 --elide-empty-files backup.tar.zst.
             docker unpause mc-java
 
             > new_links.txt
@@ -123,14 +123,11 @@ jobs:
             git commit -am "Sync world cycle $i [skip ci]" || echo "No changes"
             git push origin main
             rm *zst*
-            
-            if [ $i -eq 3 ]; then
-              curl -X POST -H "Authorization: token $GH_TOKEN" \
-                -H "Accept: application/vnd.github.v3+json" \
-                https://api.github.com/repos/${{ github.repository }}/dispatches \
-                -d '{"event_type": "restart_server"}'
-            fi
           done
+          curl -X POST -H "Authorization: token $GH_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/dispatches \
+            -d '{"event_type": "restart_server"}'
 
       - name: Graceful Shutdown
         run: |
