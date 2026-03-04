@@ -47,9 +47,9 @@ jobs:
           echo "Starting wait loop for Final Sync..."
           # Get the commit hash that triggered THIS run
           TRIGGER_HASH=$(git rev-parse HEAD)
+          MAX_TRIES=15
           
-          # Poll for 60s max
-          for i in {1..30}; do
+          for i in {1..$MAX_TRIES}; do
             git fetch origin main
             LATEST_HASH=$(git rev-parse origin/main)
             
@@ -59,7 +59,7 @@ jobs:
               exit 0
             fi
             
-            echo "Waiting for Runner #1 to push final backup... (Attempt $i/15)"
+            echo "Waiting for Runner #1 to push final backup... (Attempt $i/$MAX_TRIES)"
             sleep 2
           done
           
