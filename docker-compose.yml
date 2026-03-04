@@ -1,6 +1,5 @@
-version: '3.8'
 services:
-  mc:
+  mc-java:
     image: itzg/minecraft-server:latest
     container_name: mc-java
     ports:
@@ -31,6 +30,7 @@ services:
       resources:
         limits:
           memory: 13G
+    restart: unless-stopped
 
   playit:
     image: ghcr.io/playit-cloud/playit-agent:0.17
@@ -38,3 +38,4 @@ services:
     network_mode: host
     environment:
       - SECRET_KEY=${PLAYIT_SECRET}
+    restart: unless-stopped
