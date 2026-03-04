@@ -20,11 +20,6 @@ services:
       OP_PERMISSION_LEVEL: "4"
       SPAWN_PROTECTION: "0"
       FORCE_GAMEMODE: "false"
-      MODRINTH_PROJECTS: |-
-        fabric-api
-        worldedit
-        ferrite-core
-        lithium
       MODRINTH_DOWNLOAD_DEPENDENCIES: "required"
       ENFORCE_SECURE_PROFILE: "false"
       LOG_IPS: "false"
@@ -35,6 +30,14 @@ services:
         op ${SERVER_OP}
         pregen start 200
         say hello world
+        
+      MODRINTH_PROJECTS: |-
+        fabric-api
+        no-chat-reports
+        lithium
+        ferrite-core
+        worldedit
+        carpet
     volumes:
       - "./mc_data:/data"
     deploy:
