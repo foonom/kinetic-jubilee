@@ -100,7 +100,7 @@ jobs:
             sleep 120
             echo "Creating mid-run backup..."
             docker pause mc-java
-            sudo tar --use-compress-program="zstd -T0" -cf - ./mc_data/* | split -b 190M - backup.tar.zst.
+            sudo tar --use-compress-program="zstd -T0" -5 -cf - ./mc_data/* | split -b 990M - backup.tar.zst.
             docker unpause mc-java
 
             > new_links.txt
