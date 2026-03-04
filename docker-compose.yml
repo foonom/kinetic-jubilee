@@ -12,7 +12,7 @@ services:
       MEMORY: "10000M"
       SERVER_PORT: "25565" # Tells the Minecraft server to bind to 25575
       MOTD: "Server 3: Kinetic Jubilee"
-      ONLINE_MODE: "false"
+      ONLINE_MODE: "true"
       ENABLE_COMMAND_BLOCK: "true"
       SEED: "-9079713339616171283"
       MAX_TICK_TIME: "-1"
@@ -27,8 +27,7 @@ services:
       RCON_PASSWORD: "${RCON_PASSWD}"
       RCON_PORT: 25575
       RCON_CMDS_STARTUP:  |-
-        op ${SERVER_OP}
-        pregen start 200
+        op ${SERVER_OP} 4
         say hello world
         
       MODRINTH_PROJECTS: |-
