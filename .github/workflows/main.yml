@@ -38,7 +38,7 @@ jobs:
           if [ ! -f "catbox_links.txt" ]; then exit 0; fi
 
           TRIGGER_HASH=$(git rev-parse HEAD)
-          for i in {1..800}; do
+          for i in {1..10}; do
             git fetch origin main
             if [ "$TRIGGER_HASH" != "$(git rev-parse origin/main)" ]; then
               git pull origin main
