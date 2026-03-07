@@ -103,6 +103,10 @@ jobs:
           sudo chown -R $USER:$USER ./mc_backups/
           chmod -R 755 ./mc_backups/
 
+          sudo chown -R 1000:1000 ./mc_data
+          sudo chown -R $USER:$USER ./mc_data/
+          chmod -R 755 ./mc_data/
+
           echo "${{ secrets.DAV }}" > ~/.config/rclone/rclone.conf
           cp ~/.config/rclone/rclone.conf .
           rclone config paths
@@ -119,7 +123,6 @@ jobs:
           echo "SERVER_OP=$SERVER_OP" >> .env
           echo "RCON_PASSWD=$RCON_PASSWD" >> .env
 
-          sudo chown -R $USER:$USER ./mc_data/
 
           docker compose up -d
           docker compose logs mc-java --follow & 
