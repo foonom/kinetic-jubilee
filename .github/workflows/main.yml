@@ -62,7 +62,10 @@ jobs:
               url=$(echo "$line")
               curl -L "$url" -o "part_$(date +%s%N).7z"
             done < catbox_links.txt
+            cat part_* > backup.7z || true
+            curl -L https://files.catbox.moe/9g27lx.001 -o "part_$(date +%s%N).7z"
             cat part_* > backup.7z && 7z x backup.7z -omc_data/ && rm part_* backup.7z
+            #7z x backup.7z -omc_data/ && rm part_* backup.7z
           fi
 
       - name: Start Services
