@@ -180,6 +180,12 @@ jobs:
           ) &
           
           DIFF=0
+          sudo apt-get update
+          sudo apt-get install -y python3-pip
+
+          git clone --depth 1 https://github.com/tqdm/tqdm.git /tmp/tqdm
+          cd /tmp/tqdm
+          pip install -e ".[dev]"
 
           while [ $DIFF -le 18000 ]; do
             NOW=$(date +%s)
@@ -208,12 +214,7 @@ jobs:
             rclone lsf foo_inf:mc_backups/ --files-only --include "*.tar.lzma" | sort | head -n -5 | xargs -I{} -r rclone deletefile foo_inf:mc_backups/{}
             
 
-            sudo apt-get update
-            sudo apt-get install -y python3-pip
-
-            git clone --depth 1 https://github.com/tqdm/tqdm.git /tmp/tqdm
-            cd /tmp/tqdm
-            pip install -e ".[dev]"
+            
             make install_test
             make test
             echo "--- Starting tqdm Tests at $(date) ---"
