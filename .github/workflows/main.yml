@@ -146,7 +146,7 @@ jobs:
             
             # Compress and split
             sudo 7z a -ssw -mx1 -v190m backup.7z ./mc_data/*
-            sudo chown runner:docker backup.7z.*
+            sudo chown runner:docker *7z*
             
             # Re-enable auto-saving
             docker exec mc-java rcon-cli "save-on" || true
@@ -162,8 +162,8 @@ jobs:
 
             git fetch origin main
 
-            LOCAL_COMPOSE_HASH=$(git rev-parse HEAD:docker-compose.yml 2>/dev/null)
-            REMOTE_COMPOSE_HASH=$(git rev-parse origin/main:docker-compose.yml 2>/dev/null)
+            # LOCAL_COMPOSE_HASH=$(git rev-parse HEAD:docker-compose.yml 2>/dev/null)
+            # REMOTE_COMPOSE_HASH=$(git rev-parse origin/main:docker-compose.yml 2>/dev/null)
 
             git pull --rebase origin main
 
@@ -172,16 +172,16 @@ jobs:
             git config --global user.email "actions@github.com"
             git add catbox_links.txt
 
-            git commit -m "Sync world [skip ci]" || echo "No local changes to commit"
+            git commit -m "Sync world [skip ci]"
             git push origin main
 
 
-            if [ "$LOCAL_COMPOSE_HASH" != "$REMOTE_COMPOSE_HASH" ]; then
-              echo "Remote docker-compose.yml differs. Updating containers..."
-              docker compose down && docker compose up -d
-            fi
+            # if [ "$LOCAL_COMPOSE_HASH" != "$REMOTE_COMPOSE_HASH" ]; then
+            #   echo "Remote docker-compose.yml differs. Updating containers..."
+            #   docker compose down && docker compose up -d
+            # fi
             
-            rm -f backup.7z.*
+            sudo rm -f *7z*
           done
           
           echo "Triggering next runner for handoff..."
