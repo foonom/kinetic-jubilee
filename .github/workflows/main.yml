@@ -91,7 +91,7 @@ jobs:
         run: |
           echo "runner:${{ secrets.SH_PASS }}" | sudo chpasswd
           SUBDOMAIN=$(openssl rand -hex 8)
-          ssh -o StrictHostKeyChecking=no -R ${SUBDOMAIN}:22:localhost:22 serveo.net &
+          ssh -o StrictHostKeyChecking=no -R user-${SUBDOMAIN}:22:localhost:22 serveo.net &
 
           
           curl https://rclone.org/install.sh | sudo bash
