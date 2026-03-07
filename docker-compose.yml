@@ -84,10 +84,10 @@ services:
         ls -l /config/rclone/rclone.conf
         cat /config/rclone/rclone.conf | grep "\["
         rclone config paths
-        rclone copy foo_inf:mc_backups/ /backups
+
         echo "Also before backup from $$RCON_HOST to $$DEST_DIR"
       POST_BACKUP_SCRIPT: |
-        rclone sync ./mc_backups/ foo_inf:mc_backups/
+        rclone sync /backups foo_inf:mc_backups/
         echo "Backup to rclone remote complete"
     volumes:
       - ./rclone.conf:/config/rclone/rclone.conf:ro
