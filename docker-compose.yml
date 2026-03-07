@@ -52,6 +52,33 @@ services:
       resources:
         limits:
           memory: 12G
+  
+  restore-backup:
+    image: itzg/mc-backup
+    restart: "no"
+    entrypoint: restore-tar-backup
+    volumes:
+      - ./mc_data:/data
+      - ./mc_backups:/backups:ro
+  backups:
+    image: itzg/mc-backup
+    depends_on:
+      mc-java:
+        condition: service_healthy
+    environment:
+      BACKUP_INTERVAL: "5m"
+      RCON_HOST: mc-java
+      INITIAL_DELAY: 0
+      PRE_BACKUP_SCRIPT: |
+        echo "Before backup!"
+        rclone copy foo_inf:mc_backups/ ./mc_backups/
+        echo "Also before backup from $$RCON_HOST to $$DEST_DIR"
+      POST_BACKUP_SCRIPT: |
+        rclone copy ./mc_backups foo_inf:mc_backups
+        echo "Backup to rclone remote complete"
+    volumes:
+      - ./mc_data:/data:ro
+      - ./mc_backups:/backups
 
   playit:
     image: ghcr.io/playit-cloud/playit-agent:0.17
