@@ -97,14 +97,18 @@ jobs:
           curl https://rclone.org/install.sh | sudo bash
           
           mkdir -p ~/.config/rclone/ ./mc_backups/ ./mc_data
-          sudo chown -R $USER:$USER ./mc_data ./mc_backups
-          sudo chown -R 1000:1000 ./mc_backups ./mc_data
+          sudo chown -R 1000:1000 ./mc_backups 
+          sudo chown -R 1000:1000 ./mc_data
+          
+          sudo chown -R $USER:$USER ./mc_data
+          sudo chown -R $USER:$USER ./mc_backups/
+          chmod -R 755 ./mc_backups/ ./mc_data/
 
           echo "${{ secrets.DAV }}" > ~/.config/rclone/rclone.conf
           cp ~/.config/rclone/rclone.conf .
           rclone config paths
 
-          rclone copy -v foo_inf:mc_backups ./mc_backups/
+          rclone sync -v foo_inf:mc_backups ./mc_backups/
 
       - name: Start Services
         env:
