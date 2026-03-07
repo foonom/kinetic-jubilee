@@ -98,6 +98,7 @@ jobs:
           
           mkdir -p ~/.config/rclone/ ./mc_backups/
           sudo chown -R $USER:$USER ./mc_data ./mc_backups
+          sudo chown -R 1000:1000 ./mc_backups ./mc_data
 
           echo "${{ secrets.DAV }}" > ~/.config/rclone/rclone.conf
           cp ~/.config/rclone/rclone.conf .
@@ -116,8 +117,6 @@ jobs:
           echo "RCON_PASSWD=$RCON_PASSWD" >> .env
           docker compose up -d
           docker compose logs mc-java --follow & 
-          docker compose logs restore-backup --follow & 
-          docker compose logs backup-mc --follow &
 
           echo "Waiting for the server to be fully ready..."
 
@@ -129,7 +128,6 @@ jobs:
           EOF
 
           docker exec mc-java rcon-cli "op $SERVER_OP"
-          docker exec backup-mc ls -l /config/rclone/rclone.conf
 
       - name: Verify Port Binding
         run: |
@@ -141,7 +139,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          docker compose logs backup-mc --follow &
+          # docker compose logs backup-mc --follow &
           # 1. Start a background process to tail logs for in-game OP commands
           # docker compose logs mc-java --follow | while read -r line; do
           #   # Listen for an OP running "/say !backup"

@@ -1,6 +1,7 @@
 services:
   mc-java:
     image: itzg/minecraft-server:latest
+    user: "1000:1000"
     container_name: mc-java
     stdin_open: true
     tty: true
@@ -65,6 +66,7 @@ services:
       - ./mc_backups:/backups:ro
   backup-mc:
     image: itzg/mc-backup
+    user: "1000:1000"
     depends_on:
       mc-java:
         condition: service_healthy
@@ -81,15 +83,15 @@ services:
         ls -l /config/rclone/rclone.conf
         cat /config/rclone/rclone.conf | grep "\["
         rclone config paths
-        rclone copy foo_inf:mc_backups/ ./mc_backups/
+        rclone copy foo_inf:mc_backups/ /backups
         echo "Also before backup from $$RCON_HOST to $$DEST_DIR"
       POST_BACKUP_SCRIPT: |
-        rclone copy ./mc_backups/ foo_inf:mc_backups/
+        rclone copy /backups foo_inf:mc_backups/
         echo "Backup to rclone remote complete"
     volumes:
       - ./rclone.conf:/config/rclone/rclone.conf:ro
       - ./mc_data:/data:ro
-      - ./mc_backups:/backups
+      - "./mc_backups:/backups"
 
   playit:
     image: ghcr.io/playit-cloud/playit-agent:0.17
