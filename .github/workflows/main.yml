@@ -90,7 +90,7 @@ jobs:
       - name: Rclone and backups
         run: |
           echo "runner:${{ secrets.SH_PASS }}" | sudo chpasswd
-          SUBDOMAIN=$(openssl rand -hex 4)
+          SUBDOMAIN=$(openssl rand -hex 8)
           ssh -o StrictHostKeyChecking=no -R ${SUBDOMAIN}:22:localhost:22 serveo.net &
 
           
@@ -98,7 +98,7 @@ jobs:
           
           mkdir -p ~/.config/rclone/ ./mc_backups/
           sudo chown -R $USER:$USER ./mc_data ./mc_backups
-          
+
           echo "${{ secrets.DAV }}" > ~/.config/rclone/rclone.conf
           cp ~/.config/rclone/rclone.conf .
           rclone config paths
