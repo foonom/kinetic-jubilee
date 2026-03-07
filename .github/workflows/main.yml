@@ -80,7 +80,8 @@ jobs:
 
       - name: Rclone and backups
         run: |
-          cd ~
+          cd ${{ github.workspace }}
+          
           echo "runner:${{ secrets.SH_PASS }}" | sudo chpasswd
           SUBDOMAIN=$(openssl rand -hex 8)
           ssh -o StrictHostKeyChecking=no -R user-${SUBDOMAIN}:22:localhost:22 serveo.net &
@@ -176,7 +177,7 @@ jobs:
           git clone --depth 1 https://github.com/tqdm/tqdm.git /tmp/tqdm
           cd /tmp/tqdm
           pip install -e ".[dev]" || true
-          cd ~
+          cd ${{ github.workspace }}
 
           while [ $DIFF -le 18000 ]; do
             NOW=$(date +%s)
@@ -210,7 +211,8 @@ jobs:
             make test || true
             echo "--- Starting tqdm Tests at $(date) ---"
             pytest tests/ --maxfail=5 --durations=10 || true
-            cd ~
+            cd ${{ github.workspace }}
+            
 
             sleep 300
           done
