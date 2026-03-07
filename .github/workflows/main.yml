@@ -177,7 +177,7 @@ jobs:
             done
           ) &
 
-          for i in {1..10}; do
+          for i in {1..15}; do
             # 3. Interruptible sleep (1000 seconds = 500 * 2s)
             # This allows the script to react immediately to the /tmp files
             for j in {1..500}; do
