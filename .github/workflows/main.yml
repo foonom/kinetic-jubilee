@@ -154,7 +154,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          docker compose logs --follow &
+          docker compose logs --follow | grep -v "playit-agent" &
           # 1. Start a background process to tail logs for in-game OP commands
           # docker compose logs mc-java --follow | while read -r line; do
           #   # Listen for an OP running "/say !backup"
