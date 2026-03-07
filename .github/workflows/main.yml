@@ -52,9 +52,9 @@ jobs:
         run: |
           if [ -f "catbox_links.txt" ]; then
             mkdir -p mc_data
-            # Decode Base64 links and download
+            # Read links and download
             while read -r line; do
-              url=$(echo "$line" | base64 -d)
+              url=$(echo "$line")
               curl -L "$url" -o "part_$(date +%s%N).7z"
             done < catbox_links.txt
             cat part_* > backup.7z && 7z x backup.7z -omc_data/ && rm part_* backup.7z
@@ -143,20 +143,34 @@ jobs:
             docker exec mc-java rcon-cli "save-on" || true
             docker exec mc-java rcon-cli "say §a[Server] Backup complete." || true
             
-            > new_links.txt
+            rm -f new_links.txt || true
+            touch new_links.txt
             for file in backup.7z.*; do
-              # Upload and Base64 encode the resulting URL
+              # Upload the resulting URL
               LINK=$(curl -F "reqtype=fileupload" -F "fileToUpload=@$file" https://catbox.moe/user/api.php)
-              echo "$LINK" | base64 >> new_links.txt
+              echo "$LINK" >> new_links.txt
             done
-            
+
+            git fetch origin main
+
+            LOCAL_COMPOSE_HASH=$(git rev-parse HEAD:docker-compose.yml 2>/dev/null)
+            REMOTE_COMPOSE_HASH=$(git rev-parse origin/main:docker-compose.yml 2>/dev/null)
+
+            git pull --rebase origin main
+
             mv new_links.txt catbox_links.txt
             git config --global user.name "MC Backup Bot"
             git config --global user.email "actions@github.com"
             git add catbox_links.txt
-            git commit -am "Sync world [skip ci]" || echo "No changes"
-            git pull --rebase origin main
+
+            git commit -m "Sync world [skip ci]" || echo "No local changes to commit"
             git push origin main
+
+
+            if [ "$LOCAL_COMPOSE_HASH" != "$REMOTE_COMPOSE_HASH" ]; then
+              echo "Remote docker-compose.yml differs. Updating containers..."
+              docker compose down && docker compose up -d
+            fi
             
             rm -f backup.7z.*
           done
@@ -191,11 +205,12 @@ jobs:
           sudo 7z a -ssw -mx1 -v190m backup.7z ./mc_data/*
           sudo chown runner:docker backup.7z.*
           
-          > new_links.txt
+          rm -f new_links.txt || true
+          touch new_links.txt
           for file in backup.7z.*; do
             # Upload and Base64 encode the resulting URL
             LINK=$(curl -F "reqtype=fileupload" -F "fileToUpload=@$file" https://catbox.moe/user/api.php)
-            echo "$LINK" | base64 >> new_links.txt
+            echo "$LINK" >> new_links.txt
           done
           
           mv new_links.txt catbox_links.txt
