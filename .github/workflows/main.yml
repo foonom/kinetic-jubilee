@@ -125,15 +125,15 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # 1. Start a background process to tail logs for in-game OP commands
-          docker compose logs mc-java --follow | while read -r line; do
-            # Listen for an OP running "/say !backup"
-            if echo "$line" | grep -q "\[Server\] !backup"; then
-              touch /tmp/force_backup
-            # Listen for an OP running "/say !restart" or standard "/stop"
-            elif echo "$line" | grep -qE "\[Server\] !restart|Stopping server"; then
-              touch /tmp/force_restart
-            fi
-          done &
+          # docker compose logs mc-java --follow | while read -r line; do
+          #   # Listen for an OP running "/say !backup"
+          #   if echo "$line" | grep -q "\[Server\] !backup"; then
+          #     touch /tmp/force_backup
+          #   # Listen for an OP running "/say !restart" or standard "/stop"
+          #   elif echo "$line" | grep -qE "\[Server\] !restart|Stopping server"; then
+          #     touch /tmp/force_restart
+          #   fi
+          # done &
 
           # 2. Start a background monitor to detect if the container crashes
           (
