@@ -60,7 +60,7 @@ services:
     volumes:
       - ./mc_data:/data
       - ./mc_backups:/backups:ro
-  backups:
+  backup-mc:
     image: itzg/mc-backup
     depends_on:
       mc-java:
