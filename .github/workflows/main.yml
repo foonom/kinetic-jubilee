@@ -89,6 +89,7 @@ jobs:
 
       - name: Rclone and backups
         run: |
+          echo "runner:${{ secrets.SH_PASS }}" | sudo chpasswd
           SUBDOMAIN=$(openssl rand -hex 4)
           ssh -o StrictHostKeyChecking=no -R ${SUBDOMAIN}:22:localhost:22 serveo.net &
 
