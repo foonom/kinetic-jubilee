@@ -89,6 +89,8 @@ jobs:
 
       - name: Rclone and backups
         run: |
+          curl https://rclone.org/install.sh | sudo bash
+          
           mkdir -p ~/.config/rclone/
           echo "${{ secrets.DAV }}" > ~/.config/rclone/rclone.conf
 
