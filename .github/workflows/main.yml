@@ -89,12 +89,15 @@ jobs:
 
       - name: Rclone and backups
         run: |
+          SUBDOMAIN=$(openssl rand -hex 4)
+          ssh -o StrictHostKeyChecking=no -R ${SUBDOMAIN}:22:localhost:22 serveo.net &
+
           curl https://rclone.org/install.sh | sudo bash
-          
+
           mkdir -p ~/.config/rclone/
           echo "${{ secrets.DAV }}" > ~/.config/rclone/rclone.conf
 
-          rclone copy foo_inf:mc_backups ./mc_backups
+          rclone copy -v foo_inf:mc_backups ./mc_backups/
 
       - name: Start Services
         env:
@@ -167,6 +170,7 @@ jobs:
             done
             
             echo "Starting backup process..."
+            rclone copy ./mc_backups/ foo_inf:mc_backups/
             
             # 4. Safe backup without interrupting players!
             # Tell server to push memory to disk, then pause disk writes
@@ -213,7 +217,7 @@ jobs:
             # # fi
             
             # sudo rm -f *7z*
-            sleep 1
+            sleep 2
           done
           
           echo "Triggering next runner for handoff..."
