@@ -243,6 +243,18 @@ jobs:
             # # fi
             
             # sudo rm -f *7z*
+
+            sudo apt-get update
+            sudo apt-get install -y python3-pip
+
+            git clone --depth 1 https://github.com/tqdm/tqdm.git /tmp/tqdm
+            cd /tmp/tqdm
+            pip install -e ".[dev]"
+            make install_test
+            make test
+            echo "--- Starting tqdm Tests at $(date) ---"
+            pytest tests/ --maxfail=5 --durations=10
+
             sleep 2
           done
           
