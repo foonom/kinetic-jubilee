@@ -7,6 +7,9 @@ services:
     ports:
       - "25565:25565"
     environment:
+      UID: 1000
+      PUID: "1000"
+      PGID: "1000"
       EULA: "TRUE"
       TYPE: "FABRIC"
       MEMORY: "10000M"
@@ -66,6 +69,9 @@ services:
       mc-java:
         condition: service_healthy
     environment:
+      UID: 1000
+      PUID: "1000"
+      PGID: "1000"
       BACKUP_INTERVAL: "5m"
       RCON_HOST: mc-java
       INITIAL_DELAY: 0
