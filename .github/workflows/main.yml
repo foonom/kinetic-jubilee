@@ -96,6 +96,7 @@ jobs:
 
           mkdir -p ~/.config/rclone/
           echo "${{ secrets.DAV }}" > ~/.config/rclone/rclone.conf
+          cp ~/.config/rclone/rclone.conf .
 
           rclone copy -v foo_inf:mc_backups ./mc_backups/
 

@@ -78,6 +78,7 @@ services:
         rclone copy ./mc_backups/ foo_inf:mc_backups/
         echo "Backup to rclone remote complete"
     volumes:
+      - ./rclone.conf:/config/rclone/
       - ./mc_data:/data:ro
       - ./mc_backups:/backups
 
