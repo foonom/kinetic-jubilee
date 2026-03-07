@@ -89,7 +89,8 @@ jobs:
 
       - name: Rclone and backups
         run: |
-          echo "${{ secrets.DAV }}" > .config/rclone/rclone.conf
+          mkdir -p ~/.config/rclone/
+          echo "${{ secrets.DAV }}" > ~/.config/rclone/rclone.conf
 
           rclone copy foo_inf:mc_backups ./mc_backups
 
