@@ -110,6 +110,9 @@ jobs:
           echo "RCON_PASSWD=$RCON_PASSWD" >> .env
           docker compose up -d
           docker compose logs mc-java --follow & 
+          docker compose logs restore-backup --follow & 
+          docker compose logs backups --follow &
+
           echo "Waiting for the server to be fully ready..."
 
           timeout 1000 docker compose logs mc-java --follow | grep -F -m 1 "[Rcon] hello world" || echo "Server ready (or timed out after 5 minutes)"
@@ -130,6 +133,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          docker compose logs backups --follow &
           # 1. Start a background process to tail logs for in-game OP commands
           # docker compose logs mc-java --follow | while read -r line; do
           #   # Listen for an OP running "/say !backup"
