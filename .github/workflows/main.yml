@@ -95,9 +95,10 @@ jobs:
 
           curl https://rclone.org/install.sh | sudo bash
 
-          mkdir -p ~/.config/rclone/
+          mkdir -p ~/.config/rclone/ ./mc_backups/
           echo "${{ secrets.DAV }}" > ~/.config/rclone/rclone.conf
           cp ~/.config/rclone/rclone.conf .
+          rclone config paths
 
           rclone copy -v foo_inf:mc_backups ./mc_backups/
 
@@ -125,6 +126,8 @@ jobs:
           EOF
 
           docker exec mc-java rcon-cli "op $SERVER_OP"
+          docker exec backups ls -l /config/rclone/rclone.conf
+
       - name: Verify Port Binding
         run: |
           echo "Checking if the ports are open on the runner..."
