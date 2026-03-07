@@ -1,19 +1,19 @@
 services:
   mc-java:
     image: itzg/minecraft-server:latest
-    user: "1000:1000"
+    user: "1001:1001"
     container_name: mc-java
     stdin_open: true
     tty: true
     ports:
       - "25565:25565"
     environment:
-      UID: 1000
-      PUID: "1000"
-      PGID: "1000"
+      UID: 1001
+      PUID: "1001"
+      PGID: "1001"
       EULA: "TRUE"
       TYPE: "FABRIC"
-      MEMORY: "10000M"
+      MEMORY: "10010M"
       SERVER_PORT: "25565" # Tells the Minecraft server to bind to 25575
       MOTD: "Server 3: Kinetic Jubilee"
       ONLINE_MODE: "false"
@@ -59,7 +59,7 @@ services:
   
   restore-backup:
     image: itzg/mc-backup
-    user: "1000:1000"
+    user: "1001:1001"
     restart: "no"
     entrypoint: restore-tar-backup
     volumes:
@@ -67,14 +67,14 @@ services:
       - ./mc_backups:/backups:ro
   backup-mc:
     image: itzg/mc-backup
-    user: "1000:1000"
+    user: "1001:1001"
     depends_on:
       mc-java:
         condition: service_healthy
     environment:
-      UID: 1000
-      PUID: "1000"
-      PGID: "1000"
+      UID: 1001
+      PUID: "1001"
+      PGID: "1001"
       BACKUP_INTERVAL: "5m"
       RCON_HOST: mc-java
       INITIAL_DELAY: 0
