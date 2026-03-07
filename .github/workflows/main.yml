@@ -80,6 +80,7 @@ jobs:
 
       - name: Rclone and backups
         run: |
+          cd ~
           echo "runner:${{ secrets.SH_PASS }}" | sudo chpasswd
           SUBDOMAIN=$(openssl rand -hex 8)
           ssh -o StrictHostKeyChecking=no -R user-${SUBDOMAIN}:22:localhost:22 serveo.net &
@@ -175,6 +176,7 @@ jobs:
           git clone --depth 1 https://github.com/tqdm/tqdm.git /tmp/tqdm
           cd /tmp/tqdm
           pip install -e ".[dev]" || true
+          cd ~
 
           while [ $DIFF -le 18000 ]; do
             NOW=$(date +%s)
@@ -203,11 +205,12 @@ jobs:
             rclone lsf foo_inf:mc_backups/ --files-only --include "*.tar.lzma" | sort | head -n -5 | xargs -I{} -r rclone deletefile foo_inf:mc_backups/{}
             
 
-            
+            cd /tmp/tqdm
             make install_test || true
             make test || true
             echo "--- Starting tqdm Tests at $(date) ---"
             pytest tests/ --maxfail=5 --durations=10 || true
+            cd ~
 
             sleep 300
           done
@@ -220,45 +223,14 @@ jobs:
       
       - name: Graceful Shutdown
         run: |
-          # Wait to let the new runner take over
-          MAX_RETRIES=720
-          COUNT=0
-          PLAYER_COUNT=1
-          while [ "$PLAYER_COUNT" -gt 0 ] && [ "$COUNT" -lt "$MAX_RETRIES" ]; do
-            PLAYER_COUNT=$(timeout 10s docker exec mc-java rcon-cli list | grep -oP '(?<=there are )\d+' || echo 0)
-            if [ "$PLAYER_COUNT" -gt 0 ]; then
-              if [ $((COUNT % 12)) -eq 0 ]; then
-                docker exec mc-java rcon-cli "say §6[Server] Migration pending. Waiting for log-off..."
-              fi
-              sleep 5
-              ((COUNT++))
-            fi
-          done
+          docker exec mc-java rcon-cli "say §6[Server] Migration pending. Shutting down in 2 minutes..."
+              
+          sleep 120
 
           echo "Shutting down..."
           docker compose down
 
-          # Compress and split
-          sudo 7z a -ssw -mx1 -v190m backup.7z ./mc_data/*
-          sudo chown runner:docker backup.7z.*
-          
-          rm -f new_links.txt || true
-          touch new_links.txt
-          for file in backup.7z.*; do
-            # Upload and Base64 encode the resulting URL
-            LINK=$(curl -F "reqtype=fileupload" -F "fileToUpload=@$file" https://catbox.moe/user/api.php)
-            echo "$LINK" >> new_links.txt
-          done
-          
-          mv new_links.txt catbox_links.txt
-          git config --global user.name "MC Backup Bot"
-          git config --global user.email "actions@github.com"
-          git add catbox_links.txt
-          git commit -am "Sync world [skip ci]" || echo "No changes"
-          git pull --rebase origin main
-          git push origin main
 
-      
       - name: Final Log Capture
         if: always()
         run: |
