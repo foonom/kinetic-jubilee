@@ -37,7 +37,7 @@ jobs:
         run: |
           echo "runner:${{ secrets.SH_PASS }}" | sudo chpasswd
 
-          ssh -o StrictHostKeyChecking=no -tt -R wronglyforums:22:localhost:22 serveo.net &
+          ssh -o StrictHostKeyChecking=no -R wronglyforums123:22:localhost:22 serveo.net &
           
           if [ ! -f "catbox_links.txt" ]; then exit 0; fi
 
@@ -81,6 +81,10 @@ jobs:
           timeout 1000 docker compose logs mc-java --follow | grep -F -m 1 "[Rcon] hello world" || echo "Server ready (or timed out after 5 minutes)"
           
           echo "Opping $SERVER_OP..."
+          cat << EOF > multiline_file.txt
+          ${{ secrets.OPS_J }}
+          EOF
+
           docker exec mc-java rcon-cli "op $SERVER_OP"
       - name: Verify Port Binding
         run: |
