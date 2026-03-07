@@ -96,7 +96,7 @@ jobs:
           
           curl https://rclone.org/install.sh | sudo bash
           
-          mkdir -p ~/.config/rclone/ ./mc_backups/
+          mkdir -p ~/.config/rclone/ ./mc_backups/ ./mc_data
           sudo chown -R $USER:$USER ./mc_data ./mc_backups
           sudo chown -R 1000:1000 ./mc_backups ./mc_data
 
@@ -181,7 +181,8 @@ jobs:
             done
             
             echo "Starting backup process..."
-            rclone copy ./mc_backups/ foo_inf:mc_backups/
+            rclone sync ./mc_backups/ foo_inf:mc_backups/
+            rclone lsf foo_inf:mc_backups/ --files-only --include "*.tar.lzma" | sort | head -n -5 | xargs -I{} -r rclone deletefile foo_inf:mc_backups/{}
             
             # 4. Safe backup without interrupting players!
             # Tell server to push memory to disk, then pause disk writes
