@@ -69,6 +69,7 @@ services:
       BACKUP_INTERVAL: "5m"
       RCON_HOST: mc-java
       INITIAL_DELAY: 0
+      TAR_COMPRESS_METHOD: lzma
       PRE_BACKUP_SCRIPT: |
         echo "Before backup!"
         rclone copy foo_inf:mc_backups/ ./mc_backups/
