@@ -96,13 +96,12 @@ jobs:
           
           curl https://rclone.org/install.sh | sudo bash
           
-          mkdir -p ~/.config/rclone/ ./mc_backups/ ./mc_data
-          sudo chown -R 1000:1000 ./mc_backups 
-          sudo chown -R 1000:1000 ./mc_data
+          mkdir -p ~/.config/rclone/ ./mc_backups/
+          mkdir -p ./mc_data
           
-          sudo chown -R $USER:$USER ./mc_data
+          sudo chown -R 1000:1000 ./mc_backups
           sudo chown -R $USER:$USER ./mc_backups/
-          chmod -R 755 ./mc_backups/ ./mc_data/
+          chmod -R 755 ./mc_backups/
 
           echo "${{ secrets.DAV }}" > ~/.config/rclone/rclone.conf
           cp ~/.config/rclone/rclone.conf .
