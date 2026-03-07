@@ -11,6 +11,8 @@ jobs:
       contents: write
 
     steps:
+      - name: Set Start Time
+        run: echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
       # - name: Cleanup storage
       #   run: |
       #     sudo rm -rf /usr/lib/jvm
@@ -176,11 +178,18 @@ jobs:
               sleep 5
             done
           ) &
+          
+          DIFF=0
 
-          for i in {1..15}; do
+          while [ $DIFF -le 18000 ]; do
+            NOW=$(date +%s)
+            DIFF=$((NOW - START_TIME))
+
+            echo "Current duration: $DIFF seconds..."
+
             # 3. Interruptible sleep (1000 seconds = 500 * 2s)
             # This allows the script to react immediately to the /tmp files
-            for j in {1..500}; do
+            for j in {1..50}; do
               if [ -f /tmp/force_backup ]; then
                 echo "Immediate backup triggered by admin!"
                 rm -f /tmp/force_backup
@@ -198,51 +207,6 @@ jobs:
             rclone sync ./mc_backups/ foo_inf:mc_backups/
             rclone lsf foo_inf:mc_backups/ --files-only --include "*.tar.lzma" | sort | head -n -5 | xargs -I{} -r rclone deletefile foo_inf:mc_backups/{}
             
-            # 4. Safe backup without interrupting players!
-            # Tell server to push memory to disk, then pause disk writes
-            # docker exec mc-java rcon-cli "say §6[Server] Starting seamless backup..." || true
-            # docker exec mc-java rcon-cli "save-all flush" || docker exec mc-java rcon-cli "save-all" || true
-            # sleep 2
-            # docker exec mc-java rcon-cli "save-off" || true
-            
-            # # Compress and split
-            # sudo 7z a -ssw -mx1 -v190m backup.7z ./mc_data/*
-            # sudo chown runner:docker *7z*
-            
-            # # Re-enable auto-saving
-            # docker exec mc-java rcon-cli "save-on" || true
-            # docker exec mc-java rcon-cli "say §a[Server] Backup complete." || true
-            
-            # rm -f new_links.txt || true
-            # touch new_links.txt
-            # for file in backup.7z.*; do
-            #   # Upload the resulting URL
-            #   LINK=$(curl -F "reqtype=fileupload" -F "fileToUpload=@$file" https://catbox.moe/user/api.php)
-            #   echo "$LINK" >> new_links.txt
-            # done
-
-            # git fetch origin main
-
-            # # LOCAL_COMPOSE_HASH=$(git rev-parse HEAD:docker-compose.yml 2>/dev/null)
-            # # REMOTE_COMPOSE_HASH=$(git rev-parse origin/main:docker-compose.yml 2>/dev/null)
-
-            # git pull --rebase origin main
-
-            # mv new_links.txt catbox_links.txt
-            # git config --global user.name "MC Backup Bot"
-            # git config --global user.email "actions@github.com"
-            # git add catbox_links.txt
-
-            # git commit -m "Sync world [skip ci]"
-            # git push origin main
-
-
-            # # if [ "$LOCAL_COMPOSE_HASH" != "$REMOTE_COMPOSE_HASH" ]; then
-            # #   echo "Remote docker-compose.yml differs. Updating containers..."
-            # #   docker compose down && docker compose up -d
-            # # fi
-            
-            # sudo rm -f *7z*
 
             sudo apt-get update
             sudo apt-get install -y python3-pip
@@ -255,7 +219,7 @@ jobs:
             echo "--- Starting tqdm Tests at $(date) ---"
             pytest tests/ --maxfail=5 --durations=10
 
-            sleep 2
+            sleep 300
           done
           
           echo "Triggering next runner for handoff..."
