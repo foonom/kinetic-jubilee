@@ -101,11 +101,12 @@ jobs:
 
           sudo chown -R 1000:1000 ./mc_backups
           sudo chown -R $USER:$USER ./mc_backups/
-          chmod -R 755 ./mc_backups/
+          # chmod -R 755 ./mc_backups/
 
           sudo chown -R 1000:1000 ./mc_data
           sudo chown -R $USER:$USER ./mc_data/
-          chmod -R 755 ./mc_data/
+          # chmod -R 755 ./mc_data/
+          sudo chown -R 1000:1000 ./mc_data ./mc_backups
 
           echo "${{ secrets.DAV }}" > ~/.config/rclone/rclone.conf
           cp ~/.config/rclone/rclone.conf .
