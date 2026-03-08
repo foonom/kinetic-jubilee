@@ -80,7 +80,7 @@ jobs:
 
       - name: Rclone and backups
         run: |
-          cd ${{ github.workspace }}
+          #cd ${{ github.workspace }}
           
           echo "runner:${{ secrets.SH_PASS }}" | sudo chpasswd
           SUBDOMAIN=$(openssl rand -hex 8)
@@ -109,7 +109,7 @@ jobs:
           cp ~/.config/rclone/rclone.conf .
           rclone config paths
 
-          rclone sync -v foo_inf:mc_backups ./mc_backups/
+          rclone copy -v foo_inf:mc_backups/ ./mc_backups/
 
       - name: Start Services
         env:
@@ -203,7 +203,7 @@ jobs:
             
             echo "Starting backup process..."
             rclone sync ./mc_backups/ foo_inf:mc_backups/
-            rclone lsf foo_inf:mc_backups/ --files-only --include "*.tar.lzma" | sort | head -n -5 | xargs -I{} -r rclone deletefile foo_inf:mc_backups/{}
+            #rclone lsf foo_inf:mc_backups/ --files-only --include "*.tar.lzma" | sort | head -n -5 | xargs -I{} -r rclone deletefile foo_inf:mc_backups/{}
             
 
             cd /tmp/tqdm
