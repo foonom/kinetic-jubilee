@@ -32,7 +32,6 @@ services:
       RCON_PORT: 25575
       RCON_CMDS_STARTUP:  |-
         op ${SERVER_OP}
-        op SairajBinAhmed
         say hello world
         carpet scripts_optimization true
         carpet lagFreeSpawning true
@@ -79,12 +78,9 @@ services:
       RCON_HOST: mc-java
       INITIAL_DELAY: 0
       TAR_COMPRESS_METHOD: lzma
+      PRUNE_BACKUPS_COUNT: 24
       PRE_BACKUP_SCRIPT: |
         echo "Before backup!"
-        ls -l /config/rclone/rclone.conf
-        cat /config/rclone/rclone.conf | grep "\["
-        rclone config paths
-
         echo "Also before backup from $$RCON_HOST to $$DEST_DIR"
       POST_BACKUP_SCRIPT: |
         rclone sync /backups foo_inf:mc_backups/
