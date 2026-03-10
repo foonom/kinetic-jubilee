@@ -78,6 +78,7 @@ services:
       RCON_HOST: mc-java
       INITIAL_DELAY: 0
       TAR_COMPRESS_METHOD: lzma
+      PRUNE_BACKUPS_DAYS: -1
       PRE_BACKUP_SCRIPT: |
         echo "Before backup!"
         echo "Also before backup from $$RCON_HOST to $$DEST_DIR"
