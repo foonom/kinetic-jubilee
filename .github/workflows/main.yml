@@ -202,8 +202,8 @@ jobs:
             done
             
             echo "Starting backup process..."
-            docker exec backup-mc backup now || echo "Couldn't call backup-mc"
-            rclone sync ./mc_backups/ foo_inf:mc_backups/
+            #docker exec backup-mc backup now || echo "Couldn't call backup-mc"
+            #rclone sync ./mc_backups/ foo_inf:mc_backups/
             #rclone lsf foo_inf:mc_backups/ --files-only --include "*.tar.lzma" | sort | head -n -5 | xargs -I{} -r rclone deletefile foo_inf:mc_backups/{}
             #rclone delete foo_inf:mc_backups/ --min-age 6h --dry-run
             #rclone delete foo_inf:mc_backups/ --min-age 6h
