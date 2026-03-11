@@ -74,7 +74,7 @@ services:
       UID: 1001
       PUID: "1001"
       PGID: "1001"
-      BACKUP_INTERVAL: "5m"
+      BACKUP_INTERVAL: "10m"
       RCON_HOST: mc-java
       INITIAL_DELAY: 0
       TAR_COMPRESS_METHOD: lzma
