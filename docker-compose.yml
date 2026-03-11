@@ -74,8 +74,11 @@ services:
       UID: 1001
       PUID: "1001"
       PGID: "1001"
-      BACKUP_INTERVAL: "10m"
+      BACKUP_INTERVAL: "5m"
       RCON_HOST: mc-java
+      RCON_PASSWORD: "${RCON_PASSWD}"
+      PAUSE_IF_NO_PLAYERS: true
+      PLAYERS_ONLINE_CHECK_INTERVAL: "2m"
       INITIAL_DELAY: 0
       TAR_COMPRESS_METHOD: lzma
       PRUNE_BACKUPS_DAYS: -1
