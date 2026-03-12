@@ -187,19 +187,19 @@ jobs:
 
             # 3. Interruptible sleep (1000 seconds = 500 * 2s)
             # This allows the script to react immediately to the /tmp files
-            for j in {1..50}; do
-              if [ -f /tmp/force_backup ]; then
-                echo "Immediate backup triggered by admin!"
-                rm -f /tmp/force_backup
-                break # Breaks the inner sleep loop, proceeds to backup
-              fi
-              if [ -f /tmp/force_restart ]; then
-                echo "Stop/Restart requested or server crashed!"
-                rm -f /tmp/force_restart
-                break 2 # Breaks outer loop (1..10), skipping directly to handoff
-              fi
-              sleep 2
-            done
+            # for j in {1..50}; do
+            #   if [ -f /tmp/force_backup ]; then
+            #     echo "Immediate backup triggered by admin!"
+            #     rm -f /tmp/force_backup
+            #     break # Breaks the inner sleep loop, proceeds to backup
+            #   fi
+            #   if [ -f /tmp/force_restart ]; then
+            #     echo "Stop/Restart requested or server crashed!"
+            #     rm -f /tmp/force_restart
+            #     break 2 # Breaks outer loop (1..10), skipping directly to handoff
+            #   fi
+            #   sleep 2
+            # done
             
             echo "Starting backup process..."
             #docker exec backup-mc backup now || echo "Couldn't call backup-mc"
