@@ -11,6 +11,8 @@ jobs:
       contents: write
 
     steps:
+      - name: Set timezone
+        uses: szenius/set-timezone@v2.0
       - name: Set Start Time
         run: echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
       # - name: Cleanup storage
