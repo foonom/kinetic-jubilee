@@ -13,8 +13,13 @@ jobs:
     steps:
       - name: Set timezone
         uses: szenius/set-timezone@v2.0
+      - name: Set timezone 2
+        run: sudo timedatectl set-timezone UTC
+        
       - name: Set Start Time
-        run: echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
+        run: |
+          echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
+          echo $START_TIME
       # - name: Cleanup storage
       #   run: |
       #     sudo rm -rf /usr/lib/jvm /usr/share/dotnet /usr/share/swift /usr/local/.ghcup /usr/local/julia* /usr/local/lib/android /usr/local/share/chromium /opt/microsoft /opt/google /opt/az /opt/hostedtoolcache /opt/ghc "/usr/local/share/boost" 
