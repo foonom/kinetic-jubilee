@@ -128,7 +128,8 @@ jobs:
           echo "SERVER_OP=$SERVER_OP" >> .env
           echo "RCON_PASSWD=$RCON_PASSWD" >> .env
 
-
+          echo $START_TIME
+          
           docker compose up -d
           docker compose logs mc-java --follow & 
           docker compose logs --follow & 
