@@ -8,6 +8,7 @@ services:
     ports:
       - "25565:25565"
     environment:
+      TZ: "UTC"
       UID: 1001
       PUID: "1001"
       PGID: "1001"
@@ -58,6 +59,8 @@ services:
   
   restore-backup:
     image: itzg/mc-backup
+    environment:
+      TZ: "UTC"
     user: "1001:1001"
     restart: "no"
     entrypoint: restore-tar-backup
@@ -71,6 +74,7 @@ services:
       mc-java:
         condition: service_healthy
     environment:
+      TZ: "UTC"
       UID: 1001
       PUID: "1001"
       PGID: "1001"
