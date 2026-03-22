@@ -181,6 +181,7 @@ jobs:
           DIFF=0
           sudo apt-get update
           sudo apt-get install -y python3-pip
+          sudo apt-get install -y python3-tkinter python3-numpy || true
 
           git clone --depth 1 https://github.com/tqdm/tqdm.git /tmp/tqdm
           cd /tmp/tqdm
