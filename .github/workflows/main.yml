@@ -118,6 +118,11 @@ jobs:
 
           rclone copy -v foo_inf:mc_backups/ ./mc_backups/
 
+          if [ -z "$(ls ./mc_backups/)" ]; then
+            echo "ERROR: No backups found on remote! Aborting to prevent world reset."
+            exit 1
+          fi
+
       - name: Start Services
         env:
           PLAYIT_SECRET: ${{ secrets.PLAYIT_SECRET }}
