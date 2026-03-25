@@ -117,6 +117,7 @@ jobs:
           rclone config paths
 
           rclone copy -v foo_inf:mc_backups/ ./mc_backups/
+          rm -f ./mc_backups/.mc-backup-lock
 
           if [ -z "$(ls ./mc_backups/)" ]; then
             echo "ERROR: No backups found on remote! Aborting to prevent world reset."
