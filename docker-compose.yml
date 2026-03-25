@@ -17,7 +17,7 @@ services:
       PGID: "1001"
       EULA: "TRUE"
       TYPE: "FABRIC"
-      MEMORY: "10010M"
+      MEMORY: "9G"
       SERVER_PORT: "25565" # Tells the Minecraft server to bind to 25575
       MOTD: "Server 3: Kinetic Jubilee"
       ONLINE_MODE: "false"
@@ -64,6 +64,8 @@ services:
     image: itzg/mc-backup
     environment:
       TZ: "UTC"
+      INITIAL_DELAY: 0
+      REMOVE_DATA_BEFORE_RESTORE: true
     user: "1001:1001"
     restart: "no"
     entrypoint: restore-tar-backup
