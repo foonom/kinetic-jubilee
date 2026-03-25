@@ -1,6 +1,9 @@
 services:
   mc-java:
     image: itzg/minecraft-server:latest
+    depends_on:
+      restore-backup:
+        condition: service_completed_successfully
     user: "1001:1001"
     container_name: mc-java
     stdin_open: true
