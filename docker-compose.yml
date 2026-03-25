@@ -16,6 +16,7 @@ services:
       PUID: "1001"
       PGID: "1001"
       EULA: "TRUE"
+      VERSION: "1.21.1"
       TYPE: "FABRIC"
       MEMORY: "9G"
       SERVER_PORT: "25565" # Tells the Minecraft server to bind to 25575
