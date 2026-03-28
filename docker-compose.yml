@@ -96,7 +96,7 @@ services:
         echo "Before backup!"
         echo "Also before backup from $$RCON_HOST to $$DEST_DIR"
       POST_BACKUP_SCRIPT: |
-        rclone sync /backups foo_inf:mc_backups/
+        rclone sync /backups foo_inf:mc_backups/ --fast-list --size-only --no-traverse --retries 3 --retries-sleep 10s
         echo "Backup to rclone remote complete"
     volumes:
       - ./rclone.conf:/config/rclone/rclone.conf:ro
