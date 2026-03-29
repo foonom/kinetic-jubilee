@@ -101,20 +101,12 @@ jobs:
           sudo chown -R 1001:1001 mc_data mc_backups
           sudo chmod -R 777 mc_data mc_backups
 
-          # mkdir -p ./mc_data
-
-          # sudo chown -R 1000:1000 ./mc_backups
-          # sudo chown -R $USER:$USER ./mc_backups/
-          # chmod -R 755 ./mc_backups/
-
-          # sudo chown -R 1000:1000 ./mc_data
-          # sudo chown -R $USER:$USER ./mc_data/
-          # chmod -R 755 ./mc_data/
-          # sudo chown -R 1000:1000 ./mc_data ./mc_backups
-
           echo "${{ secrets.DAV }}" > ~/.config/rclone/rclone.conf
           cp ~/.config/rclone/rclone.conf .
           rclone config paths
+          
+          # Delete old backups first
+          rclone lsf foo_inf:mc_backups/ --files-only | sort -r | sed '1,5d' | xargs -I{} -r rclone deletefile foo_inf:mc_backups/{}
 
           rclone copy -v foo_inf:mc_backups/ ./mc_backups/
           rm -f ./mc_backups/.mc-backup-lock
