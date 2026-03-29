@@ -30,60 +30,6 @@ jobs:
 
       - name: Checkout Repo
         uses: actions/checkout@v4
-      
-      # - name: Wait for Final Sync from Peer
-      #   run: |
-      #     echo "runner:${{ secrets.SH_PASS }}" | sudo chpasswd
-
-      #     ssh -o StrictHostKeyChecking=no -R wronglyforums123:22:localhost:22 serveo.net &
-          
-      #     if [ ! -f "catbox_links.txt" ]; then exit 0; fi
-
-      #     TRIGGER_HASH=$(git rev-parse HEAD)
-      #     for i in {1..10}; do
-      #       git fetch origin main
-      #       if [ "$TRIGGER_HASH" != "$(git rev-parse origin/main)" ]; then
-      #         git pull origin main
-      #         exit 0
-      #       fi
-      #       echo "Waiting for Runner #1... (Attempt $i/15)"
-      #       sleep 5
-      #     done
-          
-          
-      # - name: Restore & Decode Data
-      #   run: |
-      #     if [ -f "catbox_links.txt" ]; then
-      #       mkdir -p mc_data
-      #       # Read links and download
-      #       while read -r line; do
-      #         url=$(echo "$line")
-      #         curl -L "$url" -o "part_$(date +%s%N).7z"
-      #       done < catbox_links.txt
-      #       cat part_* > backup.7z || true
-      #       # curl -L https://files.catbox.moe/mmjd66.001 -o "part_$(date +%s%N).7z"
-      #       # cat part_* > backup.7z && 7z x backup.7z -omc_data/ && rm part_* backup.7z
-      #       7z x backup.7z -omc_data/ && rm part_* backup.7z
-      #     fi
-      #     # if [ -f "catbox_links.txt" ]; then
-      #     #   mkdir -p mc_data
-            
-      #     #   # Filter for "catbox", remove empty lines, and trim whitespace
-      #     #   grep "catbox" catbox_links.txt | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | grep -v '^$' > filtered_links.txt
-
-      #     #   while read -r url; do
-      #     #     echo "Downloading: $url"
-      #     #     # Using a counter or hash is safer than date +%s%N for rapid-fire downloads
-      #     #     curl -L "$url" -o "part_${RANDOM}_$(date +%s).7z"
-      #     #   done < filtered_links.txt
-
-      #     #   # Only proceed to extraction if parts were actually created
-      #     #   if ls part_* 1> /dev/null 2>&1; then
-      #     #     cat part_* > backup.7z && 7z x backup.7z -omc_data/ && rm part_* backup.7z
-      #     #   else
-      #     #     echo "No valid catbox links found to download."
-      #     #   fi
-      #     # fi
 
       - name: Rclone and backups
         run: |
@@ -128,7 +74,10 @@ jobs:
 
           echo $START_TIME
           
-          docker compose up -d
+          docker compose up restore-backup
+
+          docker compose up -d mc-java backup-mc playit
+          
           docker compose logs mc-java --follow & 
           docker compose logs --follow & 
 
