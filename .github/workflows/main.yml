@@ -35,7 +35,7 @@ jobs:
         run: |
           #cd ${{ github.workspace }}
 
-          docker compose pull &
+          docker compose pull --ignore-pull-failures --include-deps -q &
           
           echo "runner:${{ secrets.SH_PASS }}" | sudo chpasswd
           SUBDOMAIN=$(openssl rand -hex 8)
