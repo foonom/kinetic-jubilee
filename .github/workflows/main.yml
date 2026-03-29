@@ -35,7 +35,7 @@ jobs:
         run: |
           #cd ${{ github.workspace }}
 
-          docker compose pull --ignore-pull-failures --include-deps -q &
+          docker compose pull --ignore-pull-failures --include-deps -q restore-backup mc-java backup-mc playit &
           
           echo "runner:${{ secrets.SH_PASS }}" | sudo chpasswd
           SUBDOMAIN=$(openssl rand -hex 8)
