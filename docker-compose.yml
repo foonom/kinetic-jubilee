@@ -93,8 +93,9 @@ services:
       TAR_COMPRESS_METHOD: lzma
       PRUNE_BACKUPS_DAYS: -1
       PRE_BACKUP_SCRIPT: |
-        echo "Before backup!"
-        echo "Also before backup from $$RCON_HOST to $$DEST_DIR"
+        echo "Deleting unnecessary backups..."
+        rclone lsf foo_inf:mc_backups/ --files-only | sort -r | sed '1,5d' | xargs -I{} -r rclone deletefile foo_inf:mc_backups/{}
+        echo "before backup, from $$RCON_HOST to $$DEST_DIR"
       POST_BACKUP_SCRIPT: |
         rclone sync /backups foo_inf:mc_backups/ --fast-list --size-only --no-traverse --retries 3 --retries-sleep 10s
         echo "Backup to rclone remote complete"
