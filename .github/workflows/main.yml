@@ -133,7 +133,7 @@ jobs:
           git clone --depth 1 https://github.com/tqdm/tqdm.git /tmp/tqdm
           cd /tmp/tqdm
           pip install -e ".[dev]" || true
-          pip install numpy dask rich
+          pip install numpy dask rich pandas keras
           cd ${{ github.workspace }}
 
           while [ $DIFF -le 18000 ]; do
