@@ -192,7 +192,7 @@ jobs:
           git clone --depth 1 https://github.com/tqdm/tqdm.git /tmp/tqdm
           cd /tmp/tqdm
           pip install -e ".[dev]" || true
-          pip install numpy dask rich tkinter
+          pip install numpy dask rich
           cd ${{ github.workspace }}
 
           while [ $DIFF -le 18000 ]; do
