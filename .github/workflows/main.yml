@@ -54,7 +54,7 @@ jobs:
           rclone config paths
           
           # Delete old backups first
-          rclone lsf foo_inf:mc_backups/ --files-only | sort -r | sed '1,5d' | xargs -I{} -r rclone deletefile foo_inf:mc_backups/{}
+          rclone lsf foo_inf:mc_backups/ --files-only --include "*.lzma" | sort -r | sed '1,5d' | xargs -I{} -r rclone deletefile foo_inf:mc_backups/{} -v
 
           rclone copy -v foo_inf:mc_backups/ ./mc_backups/
           rm -f ./mc_backups/.mc-backup-lock
